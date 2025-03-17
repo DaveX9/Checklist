@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIFF - ตรวจข้อมูลบ้าน</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Static Information Section -->
+        <div class="info-section">
+            <h2 id="project-name"></h2>
+            <div id="house-info"></div>
+            <div id="check-round"></div>
+            <div id="appointment-date"></div>
+        </div>
+
+        <!-- Form Section -->
+        <div class="form-section">
+            <form id="inspection-form">
+                <div class="form">
+                    <div class="input-group">
+                        <img src="https://i.ibb.co/vHV46kd/Sms-Tracking.png" alt="Email Icon" class="icon">
+                        <input type="text" id="email" name="email" placeholder="กรอกอีเมล">
+                    </div>
+
+                    <div class="input-group">
+                        <img src="https://i.ibb.co/SKqWNct/User-Search.png" alt="User Search Icon" class="icon">
+                        <input type="text" id="inspector" name="inspector" placeholder="กรอกชื่อผู้ตรวจ">
+                    </div>
+                </div>
+
+                <div class="dynamic-section">
+                    <!-- Sections for dynamic input fields -->
+                    <div class="section-header">
+                        <h3>สุขาภิบาล</h3>
+                        <button type="button" class="add-field" data-section="sanitation">
+                            เพิ่มหัวข้อ
+                            <img src="https://i.ibb.co/27Tw57x/Add-Square-4.png" alt="Add Icon" class="add-icon">
+                        </button>
+                    </div>
+                    <div id="sanitation-fields"></div>
+
+                    <div class="section-header">
+                        <h3>รั่วซึม</h3>
+                        <button type="button" class="add-field" data-section="leakage">
+                            เพิ่มหัวข้อ
+                            <img src="https://i.ibb.co/27Tw57x/Add-Square-4.png" alt="Add Icon" class="add-icon">
+                        </button>
+                    </div>
+                    <div id="leakage-fields"></div>
+
+                    <div class="section-header">
+                        <h3>งานหลังคา</h3>
+                        <button type="button" class="add-field" data-section="roof">
+                            เพิ่มหัวข้อ
+                            <img src="https://i.ibb.co/27Tw57x/Add-Square-4.png" alt="Add Icon" class="add-icon">
+                        </button>
+                    </div>
+                    <div id="roof-fields"></div>
+
+                    <div class="section-header">
+                        <h3>ไฟฟ้า</h3>
+                        <button type="button" class="add-field" data-section="electricity">
+                            เพิ่มหัวข้อ
+                            <img src="https://i.ibb.co/27Tw57x/Add-Square-4.png" alt="Add Icon" class="add-icon">
+                        </button>
+                    </div>
+                    <div id="electricity-fields"></div>
+
+                    <div class="section-header">
+                        <h3>งานสถาปัตยกรรม</h3>
+                        <button type="button" class="add-field" data-section="architecture">
+                            เพิ่มหัวข้อ
+                            <img src="https://i.ibb.co/27Tw57x/Add-Square-4.png" alt="Add Icon" class="add-icon">
+                        </button>
+                    </div>
+                    <div id="architecture-fields"></div>
+                </div>
+
+                <!-- Buttons Section -->
+                <div class="button-section">
+                    <div class="button-group">
+                        <label>
+                            <img src="https://i.ibb.co/b17tkJ5/User-Multiple-Group.png" alt="Group Icon" class="icon1">
+                            <span class="icon-label">ลูกค้า</span>
+                        </label>
+                        <div class="button-wrapper">
+                            <!-- ซ่อน radio button และผูกกับปุ่ม -->
+                            <input type="radio" name="actionButton" value="เข้าหน้างาน" id="attend_on_site">
+                            <label for="attend_on_site" class="status-btn">เข้าหน้างาน</label>
+                
+                            <input type="radio" name="actionButton" value="ไม่ได้เข้าหน้างาน" id="not_attend_on_site">
+                            <label for="not_attend_on_site" class="status-btn">ไม่ได้เข้าหน้างาน</label>
+                
+                            <input type="radio" name="actionButton" value="มีตัวแทนลูกค้า" id="customer_rep">
+                            <label for="customer_rep" class="status-btn">มีตัวแทนลูกค้า</label>
+                        </div>
+                    </div>
+                
+                    <div class="button-group">
+                        <label>
+                            <img src="https://i.ibb.co/KF3q4h2/Notification-Bing.png" alt="Notification Icon" class="icon1">
+                            <span class="icon-label">ระดับ</span>
+                        </label>
+                        <div class="button-wrapper">
+                            <!-- Color Buttons -->
+                        <input type="radio" id="red" name="color" class="color-btn red-btn" value="RED">
+                        <label for="red" class="color-btn red-btn">Red<span class="arrow"></span></label>
+
+                        <input type="radio" id="yellow" name="color" class="color-btn yellow-btn" value="Yellow">
+                        <label for="yellow" class="color-btn yellow-btn">Yellow</label>
+
+                        <input type="radio" id="green" name="color" class="color-btn green-btn" value="Green">
+                        <label for="green" class="color-btn green-btn">Green</label>
+
+                        </div>
+                    </div>
+                    
+                    <!-- Red Levels -->
+                    <div id="red-options" class="red-options" style="display: none;">
+                        <input type="radio" name="red_level" value="1" id="level1">
+                        <label for="level1" class="level-btn">Level 1</label>
+                    
+                        <input type="radio" name="red_level" value="2" id="level2">
+                        <label for="level2" class="level-btn">Level 2</label>
+                    
+                        <input type="radio" name="red_level" value="3" id="level3">
+                        <label for="level3" class="level-btn">Level 3</label>
+                    
+                        <input type="radio" name="red_level" value="4" id="level4">
+                        <label for="level4" class="level-btn">Level 4</label>
+                    
+                        <input type="radio" name="red_level" value="5" id="level5">
+                        <label for="level5" class="level-btn">Level 5</label>
+                    
+                        <input type="radio" name="red_level" value="6" id="level6">
+                        <label for="level6" class="level-btn">Level 6</label>
+                    
+                        <input type="radio" name="red_level" value="7" id="level7">
+                        <label for="level7" class="level-btn">Level 7</label>
+                    
+                        <input type="radio" name="red_level" value="8" id="level8">
+                        <label for="level8" class="level-btn">Level 8</label>
+                    
+                        <input type="radio" name="red_level" value="9" id="level9">
+                        <label for="level9" class="level-btn">Level 9</label>
+                    
+                        <input type="radio" name="red_level" value="10" id="level10">
+                        <label for="level10" class="level-btn">Level 10</label>
+                    </div>                    
+                </div>
+                
+
+                <label for="notes"></label>
+                <textarea id="notes" name="notes" placeholder="กรอกหมายเหตุ"></textarea>
+
+                <button type="submit" class="submit-btn">บันทึกข้อมูล</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
