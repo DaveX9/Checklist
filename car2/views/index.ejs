@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,6 +13,7 @@
         body {
             background-color: #f8f9fa;
         }
+
         .container {
             max-width: 700px;
             background: white;
@@ -21,20 +23,24 @@
             margin: auto;
             margin-top: 30px;
         }
+
         h2 {
             text-align: center;
             color: #0d487a;
         }
+
         .info-section {
             font-size: 16px;
             font-weight: bold;
             color: #0d487a;
         }
+
         .form-control {
             border-radius: 10px;
             border: 1px solid #ced4da;
             padding: 10px;
         }
+
         .btn-primary {
             background-color: #007bff;
             font-size: 18px;
@@ -51,12 +57,14 @@
 
         <div class="info-section">
             <p>📅 วันที่เช็ค: <span id="current-date"></span></p>
-            <p>🚗 ป้ายทะเบียน: 
+            <p>🚗 ป้ายทะเบียน:
                 <select id="carSelection" class="form-select w-50 d-inline">
                     <option value="">เลือกป้ายทะเบียน</option>
-                    <% Object.values(cars).forEach(car => { %>
-                        <option value="<%= car.plateNumber %>"><%= car.plateNumber %> - <%= car.model %></option>
-                    <% }); %>
+                    <% Object.values(cars).forEach(car=> { %>
+                        <option value="<%= car.plateNumber %>">
+                            <%= car.plateNumber %> - <%= car.model %>
+                        </option>
+                        <% }); %>
                 </select>
             </p>
         </div>
@@ -70,6 +78,7 @@
 
         <button class="btn btn-primary w-100 mt-3" id="submitChecklist">บันทึกข้อมูล</button>
     </div>
+
 
     <script>
         $(document).ready(function () {
@@ -169,4 +178,5 @@
         });
     </script>
 </body>
+
 </html>
