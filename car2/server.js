@@ -7,6 +7,22 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const cors = require("cors");
+
+// ✅ อนุญาตเฉพาะ Origin ที่กำหนด
+app.use(cors({
+    origin: "https://car-checker-q756e4vsv-devs-projects-c83b412e.vercel.app", // ✅ ระบุเว็บไซต์ที่อนุญาต
+    methods: "GET,POST,OPTIONS", // ✅ อนุญาตเฉพาะเมธอดที่ใช้
+    allowedHeaders: "Content-Type,Authorization" // ✅ อนุญาตเฉพาะ Headers ที่ต้องใช้
+}));
+
+// ✅ Handle Preflight Requests สำหรับ API `/send-line-message`
+app.options("/send-line-message", (req, res) => {
+    res.set("Access-Control-Allow-Origin", "https://car-checker-q756e4vsv-devs-projects-c83b412e.vercel.app");
+    res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.status(204).send();
+});
 
 app.use(bodyParser.json());
 app.use(express.static("views"));
