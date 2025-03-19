@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist Form</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 700px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            margin: auto;
+            margin-top: 30px;
+        }
+        h2 {
+            text-align: center;
+            color: #0d487a;
+        }
+        .info-section {
+            font-size: 16px;
+            font-weight: bold;
+            color: #0d487a;
+        }
+        .form-control {
+            border-radius: 10px;
+            border: 1px solid #ced4da;
+            padding: 10px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 12px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-4">
+        <h2>Checklist For Inspection Equipment</h2>
+
+        <div class="info-section">
+            <p>📅 วันที่เช็ค: <span id="current-date"></span></p>
+            <p>🚗 ป้ายทะเบียน: 
+                <select id="carSelection" class="form-select w-50 d-inline">
+                    <option value="">เลือกป้ายทะเบียน</option>
+                    <% Object.values(cars).forEach(car => { %>
+                        <option value="<%= car.plateNumber %>"><%= car.plateNumber %> - <%= car.model %></option>
+                    <% }); %>
+                </select>
+            </p>
+        </div>
+
+        <div class="info-section">
+            <label for="inspector" class="fw-bold">👤 ชื่อผู้ตรวจ:</label>
+            <input type="text" id="inspector" class="form-control mt-1" placeholder="ใส่ชื่อผู้ตรวจ" required>
+        </div>
+
+        <div class="accordion mt-3" id="inspectionAccordion"></div>
+
+        <button class="btn btn-primary w-100 mt-3" id="submitChecklist">บันทึกข้อมูล</button>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            function updateDateTime() {
+                const now = new Date();
+                const formattedDate = now.toLocaleDateString("th-TH", { year: "numeric", month: "long", day: "numeric" });
+                const formattedTime = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+                $("#current-date").text(`${formattedDate} ${formattedTime}`);
+            }
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+
+            $("#carSelection").change(function () {
+                let selectedCar = $(this).val();
+                if (!selectedCar) return;
+
+                $.get(`/get-checklist-form/${selectedCar}`, function (response) {
+                    let checklistHTML = "";
+                    response.checklist.forEach((category, index) => {
+                        let collapseID = `collapse${index}`;
+                        checklistHTML += `
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseID}">
+                                        ${category.category}
+                                    </button>
+                                </h2>
+                                <div id="${collapseID}" class="accordion-collapse collapse" data-bs-parent="#inspectionAccordion">
+                                    <div class="accordion-body">
+                                        <div class="row fw-bold text-center">
+                                            <div class="col-5">อุปกรณ์</div> <!-- Increased width -->
+                                            <div class="col-2">มี/ไม่มี</div>
+                                            <div class="col-2">จำนวน</div> <!-- Reduced width -->
+                                            <div class="col-3">หมายเหตุ</div>
+                                        </div>
+                                        <hr>
+                                        ${category.details.map(item => `
+                                            <div class="row mb-2">
+                                                <div class="col-5">${item.name}</div> <!-- Increased width -->
+                                                <div class="col-2 text-center">
+                                                    <input type="checkbox" class="form-check-input checklist-item" data-id="${item.id}">
+                                                </div>
+                                                <div class="col-2">
+                                                    <input type="number" class="form-control quantity" data-id="${item.id}" max="${item.expected || ''}">
+                                                </div> <!-- Reduced width -->
+                                                <div class="col-3">
+                                                    <input type="text" class="form-control remark" data-id="${item.id}">
+                                                </div>
+                                            </div>
+                                        `).join('')}
+
+                                    </div>
+                                </div>
+                            </div>`;
+                    });
+
+                    $("#inspectionAccordion").html(checklistHTML);
+                });
+            });
+
+            $("#submitChecklist").click(function () {
+                let inspector = $("#inspector").val().trim();
+                if (!inspector) {
+                    alert("⚠ กรุณาใส่ชื่อผู้ตรวจ!");
+                    return;
+                }
+
+                let carPlate = $("#carSelection").val();
+                if (!carPlate) {
+                    alert("⚠ กรุณาเลือกป้ายทะเบียน!");
+                    return;
+                }
+
+                let equipment = [];
+                $(".checklist-item").each(function () {
+                    let id = $(this).data("id");
+                    let quantity = parseInt($(`.quantity[data-id='${id}']`).val()) || 0;
+                    let remark = $(`.remark[data-id='${id}']`).val() || "-";
+                    let status = $(this).is(":checked") ? `มี ${quantity}` : "ไม่มี";
+                    equipment.push({ name: id, quantity, remark, status });
+                });
+
+                $.ajax({
+                    url: "/submit-checklist",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({ inspector, plateNumber: carPlate, equipment }),
+                    success: function () {
+                        alert("✅ ข้อมูลถูกส่งไปที่ LINE!");
+                    },
+                    error: function (xhr) {
+                        console.error("❌ Error:", xhr.responseText);
+                        alert("❌ ส่งข้อมูลไม่สำเร็จ! " + xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
