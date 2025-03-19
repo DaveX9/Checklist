@@ -177,6 +177,22 @@
             });
         });
     </script>
+    <!-- <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+        async function initializeLiff() {
+            await liff.init({ liffId: "2007063611-2LjAayIQ" }); // 👈 ใส่ LIFF ID ที่คุณได้จาก LINE Developer
+            if (!liff.isLoggedIn()) {
+                liff.login(); // 🔹 ถ้ายังไม่ล็อกอิน ให้พาไปล็อกอิน
+            } else {
+                const profile = await liff.getProfile();
+                console.log("👤 LINE Profile:", profile);
+                document.getElementById("inspector").value = profile.displayName; // 🔹 ตั้งค่าชื่อผู้ตรวจอัตโนมัติ
+            }
+        }
+    
+        initializeLiff();
+    </script> -->
+    
 </body>
 
 </html>
