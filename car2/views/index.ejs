@@ -17,7 +17,6 @@
 
         .container {
             max-width: 900px;
-            /* Larger width for desktop */
             background: white;
             padding: 20px;
             border-radius: 10px;
@@ -46,16 +45,21 @@
             padding: 5px 0;
             flex-wrap: nowrap;
             overflow-x: auto;
-            /* Allows horizontal scrolling if needed */
         }
 
         /* 📌 Column Widths */
-        .accordion-body .col-4,
-        .accordion-body .col-2 {
+        .accordion-body .col-5,
+        .accordion-body .col-2,
+        .accordion-body .col-3 {
             text-align: center;
             padding: 5px;
-            white-space: nowrap;
-            /* Prevents text wrapping */
+        }
+
+        /* ✅ Make long text wrap */
+        .equipment-name {
+            white-space: normal;
+            word-break: break-word;
+            text-align: left;
         }
 
         /* 🔹 Input & Checkbox Styling */
@@ -91,7 +95,7 @@
                 overflow-x: auto;
             }
 
-            .accordion-body .col-4 {
+            .accordion-body .col-5 {
                 width: 40%;
             }
 
@@ -117,14 +121,20 @@
                 font-size: 20px;
             }
 
+            /* Equipment name wraps to next line */
+            .equipment-name {
+                display: block;
+            }
+
             .accordion-body .row {
                 flex-wrap: nowrap;
                 overflow-x: auto;
                 justify-content: space-between;
             }
 
-            .accordion-body .col-4,
-            .accordion-body .col-2 {
+            .accordion-body .col-5,
+            .accordion-body .col-2,
+            .accordion-body .col-3 {
                 width: auto;
                 flex: 1;
                 text-align: center;
@@ -153,9 +163,13 @@
 
             /* Keep everything in 1 row */
             .accordion-body .row {
-                flex-wrap: nowrap;
-                overflow-x: auto;
-                white-space: nowrap;
+                flex-wrap: wrap;
+                white-space: normal;
+            }
+
+            .equipment-name {
+                width: 100%;
+                text-align: left;
             }
 
             .form-check-input {
@@ -185,7 +199,8 @@
 
         <div class="info-section">
             <label for="inspector" class="fw-bold">👤 ชื่อผู้ตรวจ:</label>
-            <input type="text" id="inspector" class="form-control mt-1" placeholder="ใส่ชื่อผู้ตรวจ" required style="text-align: left;">
+            <input type="text" id="inspector" class="form-control mt-1" placeholder="ใส่ชื่อผู้ตรวจ" required
+                style="text-align: left;">
         </div>
 
         <div class="accordion mt-3" id="inspectionAccordion"></div>
