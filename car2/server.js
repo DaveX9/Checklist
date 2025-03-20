@@ -377,23 +377,27 @@ app.post("/submit-checklist", async (req, res) => {
             message += ` ${category}\n${items.join("\n")}\n\n`;
         });
 
-        // ✅ ส่งข้อความกลับไปยัง **ผู้ใช้ที่กรอกข้อมูล**
-        await axios.post("https://api.line.me/v2/bot/message/push", {
-            to: userId, // ✅ ใช้ userId จาก Frontend ที่ดึงจาก LIFF
+        console.log("📤 Sending Message to LINE User:", userId);
+
+        // ✅ ตรวจสอบว่า Token ถูกต้องก่อนส่งข้อความ
+        console.log("🔑 Using LINE Access Token:", process.env.LINE_ACCESS_TOKEN);
+
+        const response = await axios.post("https://api.line.me/v2/bot/message/push", {
+            to: userId,
             messages: [{ type: "text", text: message }]
         }, {
             headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${process.env.LINE_ACCESS_TOKEN}`
+                "Authorization": `Bearer ${process.env.LINE_ACCESS_TOKEN}` // ✅ ใช้ Token จาก .env
             }
         });
 
-        console.log("✅ LINE Message Sent Successfully:", message);
+        console.log("✅ LINE Message Sent Successfully:", response.data);
         res.status(200).json({ success: true, message: "Checklist sent to LINE!" });
 
     } catch (error) {
         console.error("❌ Failed to Send:", error.response?.data || error.message);
-        res.status(500).json({ error: "Failed to send checklist" });
+        res.status(500).json({ error: "Failed to send checklist", details: error.response?.data });
     }
 });
 
