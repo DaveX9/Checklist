@@ -334,6 +334,15 @@ app.post("/submit-checklist", async (req, res) => {
             return res.status(400).json({ error: "Incomplete data received!" });
         }
 
+        // ✅ ตรวจสอบว่า LINE Access Token ถูกต้อง
+        if (!process.env.LINE_ACCESS_TOKEN) {
+            console.error("❌ Missing LINE Access Token!");
+            return res.status(500).json({ error: "Missing LINE Access Token!" });
+        }
+
+        console.log("🔑 Using LINE Access Token (First 10 chars):", process.env.LINE_ACCESS_TOKEN.substring(0, 10) + "...");
+
+
         // ✅ สร้างวันที่และเวลาปัจจุบัน
         const now = new Date();
         const thaiDateTime = new Intl.DateTimeFormat('th-TH', {
@@ -379,9 +388,6 @@ app.post("/submit-checklist", async (req, res) => {
 
         console.log("📤 Sending Message to LINE User:", userId);
 
-        // ✅ ตรวจสอบว่า Token ถูกต้องก่อนส่งข้อความ
-        console.log("🔑 Using LINE Access Token:", process.env.LINE_ACCESS_TOKEN);
-
         const response = await axios.post("https://api.line.me/v2/bot/message/push", {
             to: userId,
             messages: [{ type: "text", text: message }]
@@ -400,7 +406,6 @@ app.post("/submit-checklist", async (req, res) => {
         res.status(500).json({ error: "Failed to send checklist", details: error.response?.data });
     }
 });
-
 
 
 // ✅ Start Server
