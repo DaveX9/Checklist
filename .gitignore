@@ -32,3 +32,4 @@ build/
 # Ngrok (if using for local testing)
 ngrok.exe
 ngrok.log
+.txt
