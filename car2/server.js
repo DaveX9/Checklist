@@ -339,9 +339,12 @@ app.post("/submit-checklist", async (req, res) => {
         console.log("📩 Received Data from Frontend:", req.body);
 
         const { userId, inspector, plateNumber, equipment } = req.body;
+        
         if (!userId || !inspector || !plateNumber || !equipment) {
             return res.status(400).json({ error: "Incomplete data received!" });
         }
+
+        console.log("🔹 User ID ที่ได้รับจาก LIFF:", userId);
 
         // ✅ สร้างวันที่และเวลาปัจจุบัน
         const now = new Date();
@@ -352,43 +355,10 @@ app.post("/submit-checklist", async (req, res) => {
         }).format(now);
 
         let message = `📋 ตรวจสอบโดย: ${inspector}\n📅 วันที่: ${thaiDateTime}\n🚗 ป้ายทะเบียน: ${plateNumber}\n\n`;
-        let categories = {};
-        let errorMessages = [];
 
-        equipment.forEach(item => {
-            let category = checklists[plateNumber]?.find(c => c.details.some(d => d.id === item.name));
-            if (category) {
-                if (!categories[category.category]) categories[category.category] = [];
-                let equipData = category.details.find(d => d.id === item.name);
-                let qty = item.quantity || 0;
-                let expectedQty = equipData.expected || 0;
-                let remark = item.remark ? ` ${item.remark}` : "";
-
-                if (expectedQty > 0 && qty > expectedQty) {
-                    errorMessages.push(`⚠️ ${equipData.name} ห้ามใส่มากกว่า ${expectedQty}`);
-                }
-
-                let statusText = qty > 0 ? `มี ${qty}` : "ไม่มี";
-                if (expectedQty > 0) {
-                    if (qty === expectedQty) statusText += " ครบ";
-                    else if (qty < expectedQty) statusText += ` ขาด ${expectedQty - qty}`;
-                }
-
-                categories[category.category].push(`- ${equipData.name}: ${statusText}${remark}`);
-            }
-        });
-
-        if (errorMessages.length > 0) {
-            return res.status(400).json({ error: errorMessages.join("\n") });
-        }
-
-        Object.entries(categories).forEach(([category, items]) => {
-            message += ` ${category}\n${items.join("\n")}\n\n`;
-        });
-
-        // ✅ ส่งข้อความกลับไปยังผู้ใช้ที่ส่งแบบฟอร์ม
+        // ✅ ส่งข้อความไปยังผู้ใช้ที่กรอกแบบฟอร์ม
         await axios.post("https://api.line.me/v2/bot/message/push", {
-            to: userId, // ✅ ใช้ userId ที่ส่งมาจาก Frontend
+            to: userId, // ✅ ส่งไปยัง userId ที่ได้จาก LIFF
             messages: [{ type: "text", text: message }]
         }, {
             headers: {
@@ -397,7 +367,7 @@ app.post("/submit-checklist", async (req, res) => {
             }
         });
 
-        console.log("✅ LINE Message Sent Successfully:", message);
+        console.log("✅ LINE Message Sent Successfully to:", userId);
         res.status(200).json({ success: true, message: "Checklist sent to LINE!" });
 
     } catch (error) {

@@ -8,6 +8,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://static.line-scdn.net/liff/2.19.0/sdk.js"></script>
 
     <style>
         /* General Styling */
@@ -222,16 +223,24 @@
         $(document).ready(function () {
             let userId = null;
 
-            // ✅ Fetch userId from the server when the page loads
-            function getUserId() {
-                if (!userId) {
-                    $.get("/get-user-id", function (data) {
-                        userId = data.userId;
-                        console.log("User ID fetched:", userId);
-                    });
+            // ✅ โหลด LIFF และดึง userId
+            async function initLIFF() {
+                try {
+                    await liff.init({ liffId: "2007063611-2LjAaylQ" }); // 🔹 ใส่ LIFF ID ของคุณ
+                    if (!liff.isLoggedIn()) {
+                        liff.login();
+                    } else {
+                        const profile = await liff.getProfile();
+                        userId = profile.userId;
+                        console.log("✅ User ID ที่ได้จาก LIFF:", userId);
+                    }
+                } catch (error) {
+                    console.error("❌ LIFF Initialization Failed:", error);
                 }
             }
-            getUserId(); // Call function on page load
+
+            initLIFF(); // ✅ เรียกฟังก์ชันโหลด LIFF
+
 
             function updateDateTime() {
                 const now = new Date();
@@ -303,7 +312,12 @@
                 let inspector = $("#inspector").val().trim();
                 let carPlate = $("#carSelection").val();
                 if (!inspector || !carPlate) {
-                    alert("⚠ กรุณากรอกชื่อผูตรวจด้วย!");
+                    alert("⚠ กรุณากรอกข้อมูลให้ครบถ้วน!");
+                    return;
+                }
+
+                if (!userId) {
+                    alert("❌ ไม่สามารถดึง User ID ได้! กรุณาลองใหม่");
                     return;
                 }
 
@@ -316,13 +330,14 @@
                     equipment.push({ name: id, quantity, remark, status });
                 });
 
-                // ✅ Include userId in the submission payload
+                console.log("📤 กำลังส่งข้อมูลไปยัง Backend พร้อม userId:", userId);
+
                 $.ajax({
                     url: "/submit-checklist",
                     type: "POST",
                     contentType: "application/json",
                     data: JSON.stringify({
-                        userId, // ✅ Sending userId to backend
+                        userId, // ✅ ส่ง userId จาก LIFF
                         inspector,
                         plateNumber: carPlate,
                         equipment
