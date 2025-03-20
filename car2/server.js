@@ -22,16 +22,6 @@ const cars = {
     "5กก7884": { plateNumber: "5กก7884", year: 2023 }
 };
 
-app.get("/get-user-id", async (req, res) => {
-    try {
-        // ดึง userId จาก Webhook ล่าสุด (หรือเก็บใน session/database)
-        const userId = process.env.LINE_USER_ID; // หรือดึงจากฐานข้อมูล
-        res.json({ userId });
-    } catch (error) {
-        console.error("❌ Failed to fetch user ID:", error);
-        res.status(500).json({ error: "Failed to fetch user ID" });
-    }
-});
 
 
 // 📌 Vehicle Inspection Checklists
@@ -339,12 +329,11 @@ app.post("/submit-checklist", async (req, res) => {
         console.log("📩 Received Data from Frontend:", req.body);
 
         const { userId, inspector, plateNumber, equipment } = req.body;
-        if (!userId || !inspector || !plateNumber || !equipment || equipment.length === 0) {
-            return res.status(400).json({ error: "❌ ข้อมูลอุปกรณ์ว่างเปล่า!" });
+        if (!userId || !inspector || !plateNumber || !equipment) {
+            return res.status(400).json({ error: "Incomplete data received!" });
         }
 
-        console.log("🔹 ได้รับ Equipment:", equipment);
-
+        // ✅ สร้างวันที่และเวลาปัจจุบัน
         const now = new Date();
         const thaiDateTime = new Intl.DateTimeFormat('th-TH', {
             year: 'numeric', month: 'long', day: 'numeric',
@@ -353,17 +342,43 @@ app.post("/submit-checklist", async (req, res) => {
         }).format(now);
 
         let message = `📋 ตรวจสอบโดย: ${inspector}\n📅 วันที่: ${thaiDateTime}\n🚗 ป้ายทะเบียน: ${plateNumber}\n\n`;
+        let categories = {};
+        let errorMessages = [];
 
-        let equipmentList = "";
         equipment.forEach(item => {
-            equipmentList += `- ${item.name}: ${item.status} ${item.remark ? `(${item.remark})` : ""}\n`;
+            let category = checklists[plateNumber]?.find(c => c.details.some(d => d.id === item.name));
+            if (category) {
+                if (!categories[category.category]) categories[category.category] = [];
+                let equipData = category.details.find(d => d.id === item.name);
+                let qty = item.quantity || 0;
+                let expectedQty = equipData.expected || 0;
+                let remark = item.remark ? ` ${item.remark}` : "";
+
+                if (expectedQty > 0 && qty > expectedQty) {
+                    errorMessages.push(`⚠️ ${equipData.name} ห้ามใส่มากกว่า ${expectedQty}`);
+                }
+
+                let statusText = qty > 0 ? `มี ${qty}` : "ไม่มี";
+                if (expectedQty > 0) {
+                    if (qty === expectedQty) statusText += " ครบ";
+                    else if (qty < expectedQty) statusText += ` ขาด ${expectedQty - qty}`;
+                }
+
+                categories[category.category].push(`- ${equipData.name}: ${statusText}${remark}`);
+            }
         });
 
-        message += `📌 อุปกรณ์ที่ตรวจสอบ:\n${equipmentList}`;
+        if (errorMessages.length > 0) {
+            return res.status(400).json({ error: errorMessages.join("\n") });
+        }
 
-        // ✅ ส่งข้อความไปยัง LINE
+        Object.entries(categories).forEach(([category, items]) => {
+            message += ` ${category}\n${items.join("\n")}\n\n`;
+        });
+
+        // ✅ ส่งข้อความกลับไปยัง **ผู้ใช้ที่กรอกข้อมูล**
         await axios.post("https://api.line.me/v2/bot/message/push", {
-            to: userId,
+            to: userId, // ✅ ใช้ userId จาก Frontend ที่ดึงจาก LIFF
             messages: [{ type: "text", text: message }]
         }, {
             headers: {
@@ -380,6 +395,7 @@ app.post("/submit-checklist", async (req, res) => {
         res.status(500).json({ error: "Failed to send checklist" });
     }
 });
+
 
 
 // ✅ Start Server

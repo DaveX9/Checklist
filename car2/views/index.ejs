@@ -218,37 +218,67 @@
         <button class="btn btn-primary w-100 mt-3" id="submitChecklist">บันทึกข้อมูล</button>
     </div>
 
-    <script src="https://static.line-scdn.net/liff/2.19.0/sdk.js"></script>
+
     <script>
         $(document).ready(function () {
-            let userId = null; // ✅ Declare only once
-            const LIFF_ID = "2007063611-2LjAaylQ"; // ✅ Replace with your actual LIFF ID
+            let userId = null;
 
-            async function initLIFF() {
-                try {
-                    console.log("🟢 กำลังโหลด LIFF...");
-                    await liff.init({ liffId: LIFF_ID });
-                    console.log("✅ LIFF โหลดสำเร็จ!");
-
-                    if (!liff.isLoggedIn()) {
-                        console.log("🔹 ผู้ใช้ยังไม่ได้ Login, กำลัง Redirect...");
-                        liff.login();
-                    } else {
-                        console.log("✅ ผู้ใช้ล็อกอินแล้ว กำลังดึงข้อมูล...");
-
-                        const profile = await liff.getProfile();
-                        userId = profile.userId; // ✅ Assign userId correctly
-                        console.log("✅ ได้ userId:", userId);
-                        $("#userId").text(`User ID: ${userId}`);
-                    }
-                } catch (error) {
-                    console.error("❌ LIFF Initialization Failed:", error);
-                    $("#userId").text("❌ ไม่สามารถโหลด LIFF ได้");
+            // ✅ เรียก LIFF เพื่อดึง userId
+            async function initializeLiff() {
+                await liff.init({ liffId: "2007063611-2LjAaylQ" });
+                if (liff.isLoggedIn()) {
+                    let profile = await liff.getProfile();
+                    userId = profile.userId;
+                    console.log("✅ User ID from LIFF:", userId);
+                } else {
+                    liff.login();
                 }
             }
 
-            initLIFF(); // ✅ Call the function to initialize LIFF
+            initializeLiff();
 
+            $("#submitChecklist").click(function () {
+                let inspector = $("#inspector").val().trim();
+                let carPlate = $("#carSelection").val();
+                if (!inspector || !carPlate) {
+                    alert("⚠ กรุณากรอกชื่อผู้ตรวจและเลือกป้ายทะเบียน!");
+                    return;
+                }
+
+                let equipment = [];
+                $(".checklist-item").each(function () {
+                    let id = $(this).data("id");
+                    let quantity = parseInt($(`.quantity[data-id='${id}']`).val()) || 0;
+                    let remark = $(`.remark[data-id='${id}']`).val() || "-";
+                    let status = $(this).is(":checked") ? `มี ${quantity}` : "ไม่มี";
+                    equipment.push({ name: id, quantity, remark, status });
+                });
+
+                if (!userId) {
+                    alert("❌ ไม่สามารถดึง userId ได้ กรุณาลองใหม่!");
+                    return;
+                }
+
+                // ✅ ส่งข้อมูลไปที่ Backend
+                $.ajax({
+                    url: "/submit-checklist",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({
+                        userId, // ✅ ใช้ userId ที่ได้จาก LIFF
+                        inspector,
+                        plateNumber: carPlate,
+                        equipment
+                    }),
+                    success: function () {
+                        alert("✅ ข้อมูลถูกส่งไปที่ LINE!");
+                    },
+                    error: function (xhr) {
+                        console.error("❌ Error:", xhr.responseText);
+                        alert("❌ ส่งข้อมูลไม่สำเร็จ! " + xhr.responseText);
+                    }
+                });
+            });
             function updateDateTime() {
                 const now = new Date();
                 const formattedDate = new Intl.DateTimeFormat("th-TH", {
@@ -276,86 +306,44 @@
                     response.checklist.forEach((category, index) => {
                         let collapseID = `collapse${index}`;
                         checklistHTML += `
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseID}">
-                                        ${category.category}
-                                    </button>
-                                </h2>
-                                <div id="${collapseID}" class="accordion-collapse collapse" data-bs-parent="#inspectionAccordion">
-                                    <div class="accordion-body">
-                                        <div class="row fw-bold text-center">
-                                            <div class="col-5">อุปกรณ์</div> <!-- Increased width -->
-                                            <div class="col-2">มี/ไม่มี</div>
-                                            <div class="col-2">จำนวน</div> <!-- Reduced width -->
-                                            <div class="col-3">หมายเหตุ</div>
-                                        </div>
-                                        <hr>
-                                        ${category.details.map(item => `
-                                            <div class="row mb-2">
-                                                <div class="col-5">${item.name}</div> <!-- Increased width -->
-                                                <div class="col-2 text-center">
-                                                    <input type="checkbox" class="form-check-input checklist-item" data-id="${item.id}">
-                                                </div>
-                                                <div class="col-2">
-                                                    <input type="number" class="form-control quantity" data-id="${item.id}" max="${item.expected || ''}">
-                                                </div> <!-- Reduced width -->
-                                                <div class="col-3">
-                                                    <input type="text" class="form-control remark" data-id="${item.id}">
-                                                </div>
-                                            </div>
-                                        `).join('')}
-
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#${collapseID}">
+                                    ${category.category}
+                                </button>
+                            </h2>
+                            <div id="${collapseID}" class="accordion-collapse collapse" data-bs-parent="#inspectionAccordion">
+                                <div class="accordion-body">
+                                    <div class="row fw-bold text-center">
+                                        <div class="col-5">อุปกรณ์</div> <!-- Increased width -->
+                                        <div class="col-2">มี/ไม่มี</div>
+                                        <div class="col-2">จำนวน</div> <!-- Reduced width -->
+                                        <div class="col-3">หมายเหตุ</div>
                                     </div>
+                                    <hr>
+                                    ${category.details.map(item => `
+                                    <div class="row mb-2">
+                                        <div class="col-5">${item.name}</div> <!-- Increased width -->
+                                        <div class="col-2 text-center">
+                                            <input type="checkbox" class="form-check-input checklist-item" data-id="${item.id}">
+                                        </div>
+                                        <div class="col-2">
+                                            <input type="number" class="form-control quantity" data-id="${item.id}"
+                                                max="${item.expected || ''}">
+                                        </div> <!-- Reduced width -->
+                                        <div class="col-3">
+                                            <input type="text" class="form-control remark" data-id="${item.id}">
+                                        </div>
+                                    </div>
+                                    `).join('')}
+
                                 </div>
-                            </div>`;
+                            </div>
+                        </div>`;
                     });
 
                     $("#inspectionAccordion").html(checklistHTML);
-                });
-            });
-
-            $("#submitChecklist").click(function () {
-                let inspector = $("#inspector").val().trim();
-                let carPlate = $("#carSelection").val();
-                if (!inspector || !carPlate) {
-                    alert("⚠ กรุณากรอกข้อมูลให้ครบถ้วน!");
-                    return;
-                }
-
-                if (!userId) {
-                    alert("❌ ไม่สามารถดึง User ID ได้! กรุณาลองใหม่");
-                    return;
-                }
-
-                let equipment = [];
-                $(".checklist-item").each(function () {
-                    let id = $(this).data("id");
-                    let quantity = parseInt($(`.quantity[data-id='${id}']`).val()) || 0;
-                    let remark = $(`.remark[data-id='${id}']`).val() || "-";
-                    let status = $(this).is(":checked") ? `มี ${quantity}` : "ไม่มี";
-                    equipment.push({ name: id, quantity, remark, status });
-                });
-
-                console.log("📤 Equipment ที่กำลังส่งไป Backend:", equipment); // ✅ Debug Equipment
-
-                $.ajax({
-                    url: "/submit-checklist",
-                    type: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify({
-                        userId, // ✅ ส่ง userId จาก LIFF
-                        inspector,
-                        plateNumber: carPlate,
-                        equipment
-                    }),
-                    success: function () {
-                        alert("✅ ข้อมูลถูกส่งไปที่ LINE!");
-                    },
-                    error: function (xhr) {
-                        console.error("❌ Error:", xhr.responseText);
-                        alert("❌ ส่งข้อมูลไม่สำเร็จ! " + xhr.responseText);
-                    }
                 });
             });
         });
