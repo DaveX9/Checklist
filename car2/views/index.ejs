@@ -37,6 +37,10 @@
             color: #0d487a;
         }
 
+        #inspector {
+            margin-bottom: 20px;
+        }
+
         /* 📌 Checklist Table Layout */
         .accordion-body .row {
             display: flex;
@@ -182,6 +186,11 @@
 <body>
     <div class="container mt-4">
         <h2>Checklist For Inspection Equipment</h2>
+        <div class="info-section">
+            <label for="inspector" class="fw-bold">👤 ชื่อผู้ตรวจ:</label>
+            <input type="text" id="inspector" class="form-control mt-1" placeholder="ใส่ชื่อผู้ตรวจ" required
+                style="text-align: left;">
+        </div>
 
         <div class="info-section">
             <p>📅 วันที่เช็ค: <span id="current-date"></span></p>
@@ -197,11 +206,11 @@
             </p>
         </div>
 
-        <div class="info-section">
+        <!-- <div class="info-section">
             <label for="inspector" class="fw-bold">👤 ชื่อผู้ตรวจ:</label>
             <input type="text" id="inspector" class="form-control mt-1" placeholder="ใส่ชื่อผู้ตรวจ" required
                 style="text-align: left;">
-        </div>
+        </div> -->
 
         <div class="accordion mt-3" id="inspectionAccordion"></div>
 
@@ -211,6 +220,19 @@
 
     <script>
         $(document).ready(function () {
+            let userId = null;
+
+            // ✅ Fetch userId from the server when the page loads
+            function getUserId() {
+                if (!userId) {
+                    $.get("/get-user-id", function (data) {
+                        userId = data.userId;
+                        console.log("User ID fetched:", userId);
+                    });
+                }
+            }
+            getUserId(); // Call function on page load
+
             function updateDateTime() {
                 const now = new Date();
                 const formattedDate = new Intl.DateTimeFormat("th-TH", {
@@ -279,14 +301,9 @@
 
             $("#submitChecklist").click(function () {
                 let inspector = $("#inspector").val().trim();
-                if (!inspector) {
-                    alert("⚠ กรุณาใส่ชื่อผู้ตรวจ!");
-                    return;
-                }
-
                 let carPlate = $("#carSelection").val();
-                if (!carPlate) {
-                    alert("⚠ กรุณาเลือกป้ายทะเบียน!");
+                if (!inspector || !carPlate) {
+                    alert("⚠ กรุณากรอกชื่อผูตรวจด้วย!");
                     return;
                 }
 
@@ -299,11 +316,17 @@
                     equipment.push({ name: id, quantity, remark, status });
                 });
 
+                // ✅ Include userId in the submission payload
                 $.ajax({
                     url: "/submit-checklist",
                     type: "POST",
                     contentType: "application/json",
-                    data: JSON.stringify({ inspector, plateNumber: carPlate, equipment }),
+                    data: JSON.stringify({
+                        userId, // ✅ Sending userId to backend
+                        inspector,
+                        plateNumber: carPlate,
+                        equipment
+                    }),
                     success: function () {
                         alert("✅ ข้อมูลถูกส่งไปที่ LINE!");
                     },
@@ -314,7 +337,9 @@
                 });
             });
         });
+
     </script>
+
 
 </body>
 
