@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const axios = require("axios");
 const path = require("path");
 require("dotenv").config();
-
+console.log("🔑 LINE Access Token:", process.env.LINE_ACCESS_TOKEN ? "Loaded" : "Not Found!");
 
 const app = express();
 // const PORT = process.env.PORT || 3000;
