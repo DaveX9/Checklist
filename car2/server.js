@@ -339,14 +339,12 @@ app.post("/submit-checklist", async (req, res) => {
         console.log("📩 Received Data from Frontend:", req.body);
 
         const { userId, inspector, plateNumber, equipment } = req.body;
-        
-        if (!userId || !inspector || !plateNumber || !equipment) {
-            return res.status(400).json({ error: "Incomplete data received!" });
+        if (!userId || !inspector || !plateNumber || !equipment || equipment.length === 0) {
+            return res.status(400).json({ error: "❌ ข้อมูลอุปกรณ์ว่างเปล่า!" });
         }
 
-        console.log("🔹 User ID ที่ได้รับจาก LIFF:", userId);
+        console.log("🔹 ได้รับ Equipment:", equipment);
 
-        // ✅ สร้างวันที่และเวลาปัจจุบัน
         const now = new Date();
         const thaiDateTime = new Intl.DateTimeFormat('th-TH', {
             year: 'numeric', month: 'long', day: 'numeric',
@@ -356,9 +354,16 @@ app.post("/submit-checklist", async (req, res) => {
 
         let message = `📋 ตรวจสอบโดย: ${inspector}\n📅 วันที่: ${thaiDateTime}\n🚗 ป้ายทะเบียน: ${plateNumber}\n\n`;
 
-        // ✅ ส่งข้อความไปยังผู้ใช้ที่กรอกแบบฟอร์ม
+        let equipmentList = "";
+        equipment.forEach(item => {
+            equipmentList += `- ${item.name}: ${item.status} ${item.remark ? `(${item.remark})` : ""}\n`;
+        });
+
+        message += `📌 อุปกรณ์ที่ตรวจสอบ:\n${equipmentList}`;
+
+        // ✅ ส่งข้อความไปยัง LINE
         await axios.post("https://api.line.me/v2/bot/message/push", {
-            to: userId, // ✅ ส่งไปยัง userId ที่ได้จาก LIFF
+            to: userId,
             messages: [{ type: "text", text: message }]
         }, {
             headers: {
@@ -367,7 +372,7 @@ app.post("/submit-checklist", async (req, res) => {
             }
         });
 
-        console.log("✅ LINE Message Sent Successfully to:", userId);
+        console.log("✅ LINE Message Sent Successfully:", message);
         res.status(200).json({ success: true, message: "Checklist sent to LINE!" });
 
     } catch (error) {
@@ -375,6 +380,7 @@ app.post("/submit-checklist", async (req, res) => {
         res.status(500).json({ error: "Failed to send checklist" });
     }
 });
+
 
 // ✅ Start Server
 // app.listen(PORT, () => {

@@ -337,7 +337,7 @@
                     equipment.push({ name: id, quantity, remark, status });
                 });
 
-                console.log("📤 กำลังส่งข้อมูลไปยัง Backend พร้อม userId:", userId);
+                console.log("📤 Equipment ที่กำลังส่งไป Backend:", equipment); // ✅ Debug Equipment
 
                 $.ajax({
                     url: "/submit-checklist",
