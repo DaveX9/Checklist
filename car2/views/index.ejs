@@ -221,21 +221,33 @@
 
     <script>
         $(document).ready(function () {
-            let userId = null;
-
-            // ✅ เรียก LIFF เพื่อดึง userId
             async function initializeLiff() {
-                await liff.init({ liffId: "2007063611-2LjAaylQ" });  // แทนที่ YOUR_LIFF_ID ด้วย LIFF ID จริงของคุณ
-                if (liff.isLoggedIn()) {
-                    let profile = await liff.getProfile();
-                    userId = profile.userId; // ✅ ดึง userId ของผู้ใช้
-                    console.log("✅ User ID from LIFF:", userId);
-                } else {
-                    liff.login({ scope: "profile" }); // ✅ เพิ่ม scope เพื่อขอสิทธิ์ดึงข้อมูลโปรไฟล์
+                try {
+                    await liff.init({ liffId: "2007063611-2LjAaylQ" }); // 🔹 ใส่ LIFF ID จริงของคุณ
+
+                    if (!liff.isLoggedIn()) {
+                        liff.login({ scope: "profile" }); // ✅ บังคับให้ล็อกอินและขอสิทธิ์ดึงโปรไฟล์
+                    } else {
+                        getProfile(); // ✅ ดึงโปรไฟล์หลังจากล็อกอิน
+                    }
+                } catch (error) {
+                    console.error("🔥 LIFF Initialization Error:", error);
                 }
             }
 
+            // ✅ ดึงข้อมูลโปรไฟล์จาก LIFF
+            async function getProfile() {
+                try {
+                    const profile = await liff.getProfile();
+                    const userId = profile.userId;
+                    console.log("📢 userId ที่ได้จากโปรไฟล์:", userId);
+                    window.userId = userId; // 🔹 เก็บ userId ไว้ใช้ในหน้าเว็บ
+                } catch (error) {
+                    console.error("🔥 ไม่สามารถดึงข้อมูลโปรไฟล์ได้:", error);
+                }
+            }
 
+            // ✅ เรียกใช้งาน LIFF ตอนโหลดหน้าเว็บ
             initializeLiff();
 
             $("#submitChecklist").click(function () {
@@ -243,6 +255,11 @@
                 let carPlate = $("#carSelection").val();
                 if (!inspector || !carPlate) {
                     alert("⚠ กรุณากรอกชื่อผู้ตรวจและเลือกป้ายทะเบียน!");
+                    return;
+                }
+
+                if (!window.userId) {
+                    alert("❌ ไม่สามารถดึง userId ได้ กรุณาลองใหม่!");
                     return;
                 }
 
@@ -255,18 +272,14 @@
                     equipment.push({ name: id, quantity, remark, status });
                 });
 
-                if (!userId) {
-                    alert("❌ ไม่สามารถดึง userId ได้ กรุณาลองใหม่!");
-                    return;
-                }
+                console.log("📤 ส่งข้อมูลไปที่ Backend:", { userId: window.userId, inspector, plateNumber: carPlate, equipment });
 
-                // ✅ ส่งข้อมูลไปที่ Backend
                 $.ajax({
                     url: "/submit-checklist",
                     type: "POST",
                     contentType: "application/json",
                     data: JSON.stringify({
-                        userId, // ✅ ใช้ userId ที่ได้จาก LIFF
+                        userId: window.userId, // ✅ ส่ง userId ไปยัง Backend
                         inspector,
                         plateNumber: carPlate,
                         equipment
@@ -280,6 +293,7 @@
                     }
                 });
             });
+
             function updateDateTime() {
                 const now = new Date();
                 const formattedDate = new Intl.DateTimeFormat("th-TH", {
