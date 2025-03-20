@@ -334,6 +334,8 @@ app.post("/submit-checklist", async (req, res) => {
             return res.status(400).json({ error: "Incomplete data received!" });
         }
 
+        console.log("📤 Sending Message to LINE User:", userId);
+
         // ✅ ตรวจสอบว่า LINE Access Token ถูกต้อง
         if (!process.env.LINE_ACCESS_TOKEN) {
             console.error("❌ Missing LINE Access Token!");
@@ -386,15 +388,15 @@ app.post("/submit-checklist", async (req, res) => {
             message += ` ${category}\n${items.join("\n")}\n\n`;
         });
 
-        console.log("📤 Sending Message to LINE User:", userId);
+        console.log("🔑 Using LINE Access Token:", process.env.LINE_ACCESS_TOKEN);
 
         const response = await axios.post("https://api.line.me/v2/bot/message/push", {
-            to: userId,
+            to: userId, // ✅ ใช้ userId ที่ได้รับจาก LIFF
             messages: [{ type: "text", text: message }]
         }, {
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${process.env.LINE_ACCESS_TOKEN}` // ✅ ใช้ Token จาก .env
+                "Authorization": `Bearer ${process.env.LINE_ACCESS_TOKEN}`
             }
         });
 
