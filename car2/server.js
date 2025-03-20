@@ -3,11 +3,18 @@ const bodyParser = require("body-parser");
 const axios = require("axios");
 const path = require("path");
 require("dotenv").config();
+const cors = require("cors");
 
 const app = express();
 // const PORT = process.env.PORT || 3000;
 const PORT = process.env.PORT || 8080; // ✅ Use Railway-assigned PORT
 
+// ✅ เพิ่ม CORS Middleware และกำหนด Origin
+app.use(cors({
+    origin: "https://checklist-production-35fa.up.railway.app/", // ระบุ origin ที่อนุญาต
+    methods: "GET,POST,OPTIONS", // อนุญาต HTTP Methods
+    allowedHeaders: "Content-Type,Authorization" // อนุญาต Headers ที่ต้องใช้
+}));
 
 app.use(bodyParser.json());
 app.use(express.static("views"));
@@ -397,7 +404,13 @@ app.post("/submit-checklist", async (req, res) => {
 });
 
 
-
+// ✅ Handle Preflight Requests (สำคัญมากสำหรับ CORS)
+app.options("/send-line-message", (req, res) => {
+    res.set("Access-Control-Allow-Origin", "https://checklist-production-35fa.up.railway.app/");
+    res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.status(204).send();
+});
 // ✅ Start Server
 // app.listen(PORT, () => {
 //     console.log(`🚀 Server running on http://localhost:${PORT}`);
