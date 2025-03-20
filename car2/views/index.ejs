@@ -225,15 +225,16 @@
 
             // ✅ เรียก LIFF เพื่อดึง userId
             async function initializeLiff() {
-                await liff.init({ liffId: "2007063611-2LjAaylQ" });
+                await liff.init({ liffId: "YOUR_LIFF_ID" });  // แทนที่ YOUR_LIFF_ID ด้วย LIFF ID จริงของคุณ
                 if (liff.isLoggedIn()) {
                     let profile = await liff.getProfile();
-                    userId = profile.userId;
+                    userId = profile.userId; // ✅ ดึง userId ของผู้ใช้
                     console.log("✅ User ID from LIFF:", userId);
                 } else {
-                    liff.login();
+                    liff.login({ scope: "profile" }); // ✅ เพิ่ม scope เพื่อขอสิทธิ์ดึงข้อมูลโปรไฟล์
                 }
             }
+
 
             initializeLiff();
 
@@ -242,6 +243,11 @@
                 let carPlate = $("#carSelection").val();
                 if (!inspector || !carPlate) {
                     alert("⚠ กรุณากรอกชื่อผู้ตรวจและเลือกป้ายทะเบียน!");
+                    return;
+                }
+
+                if (!userId) {
+                    alert("❌ ไม่สามารถดึง userId ได้ กรุณาลองใหม่!");
                     return;
                 }
 
@@ -254,18 +260,14 @@
                     equipment.push({ name: id, quantity, remark, status });
                 });
 
-                if (!userId) {
-                    alert("❌ ไม่สามารถดึง userId ได้ กรุณาลองใหม่!");
-                    return;
-                }
+                console.log("📤 Sending Data to Backend:", { userId, inspector, plateNumber: carPlate, equipment });
 
-                // ✅ ส่งข้อมูลไปที่ Backend
                 $.ajax({
                     url: "/submit-checklist",
                     type: "POST",
                     contentType: "application/json",
                     data: JSON.stringify({
-                        userId, // ✅ ใช้ userId ที่ได้จาก LIFF
+                        userId, // ✅ ส่ง userId ไปยัง Backend
                         inspector,
                         plateNumber: carPlate,
                         equipment
@@ -279,6 +281,7 @@
                     }
                 });
             });
+
             function updateDateTime() {
                 const now = new Date();
                 const formattedDate = new Intl.DateTimeFormat("th-TH", {
