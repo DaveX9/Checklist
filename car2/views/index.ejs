@@ -17,7 +17,7 @@
 
         .container {
             max-width: 900px;
-            /* Desktop */
+            /* Larger width for desktop */
             background: white;
             padding: 20px;
             border-radius: 10px;
@@ -31,26 +31,26 @@
             color: #0d487a;
         }
 
-        /* Form Sections */
+        /* 📌 Form Sections */
         .info-section {
             font-size: 16px;
             font-weight: bold;
             color: #0d487a;
         }
 
-        /* 📌 Table & Form Layout */
+        /* 📌 Checklist Table Layout */
         .accordion-body .row {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 5px 0;
             flex-wrap: nowrap;
-            /* 🔥 Keep items in 1 row */
             overflow-x: auto;
+            /* Allows horizontal scrolling if needed */
         }
 
-        .accordion-body .col-5,
-        .accordion-body .col-3,
+        /* 📌 Column Widths */
+        .accordion-body .col-4,
         .accordion-body .col-2 {
             text-align: center;
             padding: 5px;
@@ -58,9 +58,11 @@
             /* Prevents text wrapping */
         }
 
+        /* 🔹 Input & Checkbox Styling */
         .form-control {
             width: 100%;
             padding: 8px;
+            text-align: center;
         }
 
         /* ✅ Smaller Checkboxes */
@@ -71,7 +73,7 @@
             margin: auto;
         }
 
-        /* 🔥 Responsive Styles */
+        /* 🔥 Responsive Design */
         @media (max-width: 1024px) {
             .container {
                 max-width: 95%;
@@ -89,16 +91,12 @@
                 overflow-x: auto;
             }
 
-            .accordion-body .col-5 {
+            .accordion-body .col-4 {
                 width: 40%;
             }
 
             .accordion-body .col-2 {
                 width: 20%;
-            }
-
-            .accordion-body .col-3 {
-                width: 25%;
             }
 
             /* Adjust button */
@@ -125,8 +123,7 @@
                 justify-content: space-between;
             }
 
-            .accordion-body .col-5,
-            .accordion-body .col-3,
+            .accordion-body .col-4,
             .accordion-body .col-2 {
                 width: auto;
                 flex: 1;
@@ -188,7 +185,7 @@
 
         <div class="info-section">
             <label for="inspector" class="fw-bold">👤 ชื่อผู้ตรวจ:</label>
-            <input type="text" id="inspector" class="form-control mt-1" placeholder="ใส่ชื่อผู้ตรวจ" required>
+            <input type="text" id="inspector" class="form-control mt-1" placeholder="ใส่ชื่อผู้ตรวจ" required style="text-align: left;">
         </div>
 
         <div class="accordion mt-3" id="inspectionAccordion"></div>
@@ -294,7 +291,6 @@
             });
         });
     </script>
-
 
 </body>
 
