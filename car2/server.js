@@ -22,6 +22,16 @@ const cars = {
     "5กก7884": { plateNumber: "5กก7884", year: 2023 }
 };
 
+app.get("/get-user-id", async (req, res) => {
+    try {
+        // ดึง userId จาก Webhook ล่าสุด (หรือเก็บใน session/database)
+        const userId = process.env.LINE_USER_ID; // หรือดึงจากฐานข้อมูล
+        res.json({ userId });
+    } catch (error) {
+        console.error("❌ Failed to fetch user ID:", error);
+        res.status(500).json({ error: "Failed to fetch user ID" });
+    }
+});
 
 
 // 📌 Vehicle Inspection Checklists
@@ -267,127 +277,6 @@ const checklists = {
         }
     ]
 };
-// // 📌 Render Home Page
-// app.get("/", (req, res) => {
-//     res.render("index", { cars });
-// });
-
-// // 📌 Fetch Checklist Based on License Plate
-// app.get("/get-checklist-form/:plateNumber", (req, res) => {
-//     const checklist = checklists[req.params.plateNumber];
-//     if (!checklist) {
-//         return res.status(404).json({ error: "Checklist not found" });
-//     }
-//     res.json({ plateNumber: req.params.plateNumber, checklist });
-// });
-
-// // 📌 Send Checklist to LINE
-// app.post("/submit-checklist", async (req, res) => {
-//     try {
-//         console.log("📌 Received Data from Frontend:", req.body);
-
-//         const { inspector, plateNumber, equipment } = req.body;
-//         if (!inspector || !plateNumber || !equipment) {
-//             throw new Error("Incomplete data received!");
-//         }
-
-//         if (!checklists[plateNumber]) {
-//             throw new Error("No checklist found for this plate number!");
-//         }
-
-//         // ✅ Check if any quantity exceeds the expected limit
-//         let errorMessages = [];
-//         equipment.forEach(item => {
-//             let category = checklists[plateNumber].find(c => c.details.some(d => d.id === item.name));
-//             if (category) {
-//                 let equipmentData = category.details.find(d => d.id === item.name);
-//                 if (!equipmentData) return;
-
-//                 let expectedQty = equipmentData.expected || 0;
-//                 let quantity = item.quantity;
-
-//                 if (expectedQty > 0 && quantity > expectedQty) {
-//                     errorMessages.push(`⚠️ ${equipmentData.name} ห้ามใส่เกิน ${expectedQty} ชิ้น`);
-//                 }
-//             }
-//         });
-
-//         if (errorMessages.length > 0) {
-//             return res.status(400).json({ error: errorMessages.join("\n") });
-//         }
-
-//         // ✅ Construct the checklist message
-//         let message = `📋 Checklist ตรวจสอบโดย: ${inspector}\n`;
-//         message += `📅 วันที่: ${new Date().toLocaleDateString("th-TH", {
-//             year: "numeric", month: "long", day: "numeric"
-//         })} ${new Date().toLocaleTimeString("th-TH", {
-//             hour: "2-digit", minute: "2-digit", second: "2-digit"
-//         })}\n`;
-//         message += `🚗 ป้ายทะเบียน: ${plateNumber}\n\n`;
-
-//         // ✅ Organizing equipment by category
-//         let categories = {};
-//         equipment.forEach(item => {
-//             let category = checklists[plateNumber].find(c => c.details.some(d => d.id === item.name));
-//             if (category) {
-//                 if (!categories[category.category]) {
-//                     categories[category.category] = [];
-//                 }
-
-//                 let equipmentData = category.details.find(d => d.id === item.name);
-//                 if (!equipmentData) return;
-
-//                 let expectedQty = equipmentData.expected || 0;
-//                 let quantity = item.quantity;
-//                 let remark = item.remark ? ` ${item.remark}` : "";
-//                 let statusText = "ไม่มี";
-
-//                 if (quantity > 0) {
-//                     statusText = `มี ${quantity}`;
-//                     if (expectedQty > 0) {
-//                         if (quantity === expectedQty) {
-//                             statusText += " ครบ";
-//                         } else if (quantity < expectedQty) {
-//                             statusText += ` ขาด ${expectedQty - quantity}`;
-//                         }
-//                     }
-//                 }
-
-//                 categories[category.category].push(`- ${equipmentData.name} ${statusText}${remark}`);
-//             }
-//         });
-
-//         // ✅ Formatting output with a blank line after each category
-//         Object.entries(categories).forEach(([category, items]) => {
-//             message += `${category}\n${items.join("\n")}\n\n`;  // <<<<< Added a blank line at the end
-//         });
-
-//         // ✅ Sending message to LINE
-//         await axios.post(
-//             "https://api.line.me/v2/bot/message/push",
-//             {
-//                 to: process.env.LINE_USER_ID,
-//                 messages: [{ type: "text", text: message }],
-//             },
-//             {
-//                 headers: {
-//                     "Content-Type": "application/json",
-//                     Authorization: `Bearer ${process.env.LINE_ACCESS_TOKEN}`,
-//                 },
-//             }
-//         );
-
-//         console.log("✅ LINE Message Sent Successfully:", message);
-//         res.status(200).json({ success: true, message: "Checklist sent to LINE!" });
-//     } catch (error) {
-//         console.error("❌ Failed to Send:", error.response?.data || error.message);
-//         res.status(500).json({ error: "Failed to send checklist" });
-//     }
-// });
-
-// app.listen(PORT, () => {
-//     console.log(`🚀 Server is running on http://localhost:${PORT}`);
-// });
 
 // ✅ Render Home Page
 app.get("/", (req, res) => {
@@ -447,24 +336,24 @@ app.post("/webhook", (req, res) => {
 // ✅ Submit Checklist & Notify LINE
 app.post("/submit-checklist", async (req, res) => {
     try {
-        console.log("Received Data from Frontend:", req.body);
+        console.log("📩 Received Data from Frontend:", req.body);
 
-        const { inspector, plateNumber, equipment } = req.body;
-        if (!inspector || !plateNumber || !equipment) {
+        const { userId, inspector, plateNumber, equipment } = req.body;
+        if (!userId || !inspector || !plateNumber || !equipment) {
             return res.status(400).json({ error: "Incomplete data received!" });
         }
 
-        // ✅ สร้างวันที่และเวลาปัจจุบันในรูปแบบที่ต้องการ
+        // ✅ สร้างวันที่และเวลาปัจจุบัน
         const now = new Date();
         const thaiDateTime = new Intl.DateTimeFormat('th-TH', {
             year: 'numeric', month: 'long', day: 'numeric',
             hour: '2-digit', minute: '2-digit', second: '2-digit',
-            timeZone: 'Asia/Bangkok'  // ✅ บังคับให้ใช้เวลาไทย
+            timeZone: 'Asia/Bangkok'
         }).format(now);
 
         let message = `📋 ตรวจสอบโดย: ${inspector}\n📅 วันที่: ${thaiDateTime}\n🚗 ป้ายทะเบียน: ${plateNumber}\n\n`;
         let categories = {};
-        let errorMessages = []; // ✅ เก็บข้อความแจ้งเตือนหากจำนวนเกิน
+        let errorMessages = [];
 
         equipment.forEach(item => {
             let category = checklists[plateNumber]?.find(c => c.details.some(d => d.id === item.name));
@@ -473,36 +362,33 @@ app.post("/submit-checklist", async (req, res) => {
                 let equipData = category.details.find(d => d.id === item.name);
                 let qty = item.quantity || 0;
                 let expectedQty = equipData.expected || 0;
-                let remark = item.remark ? ` ${item.remark}` : ""; // ✅ เพิ่มช่องว่างก่อนหมายเหตุ
+                let remark = item.remark ? ` ${item.remark}` : "";
 
-                // ✅ เช็คว่าจำนวนเกินค่าที่จำกัดไว้หรือไม่
                 if (expectedQty > 0 && qty > expectedQty) {
                     errorMessages.push(`⚠️ ${equipData.name} ห้ามใส่มากกว่า ${expectedQty}`);
                 }
 
                 let statusText = qty > 0 ? `มี ${qty}` : "ไม่มี";
                 if (expectedQty > 0) {
-                    if (qty === expectedQty) statusText += " ครบ"; // ✅ เพิ่มช่องว่างหลัง "ครบ"
+                    if (qty === expectedQty) statusText += " ครบ";
                     else if (qty < expectedQty) statusText += ` ขาด ${expectedQty - qty}`;
                 }
 
-                categories[category.category].push(`- ${equipData.name}: ${statusText}${remark}`); // ✅ เพิ่มหมายเหตุในรายการ
+                categories[category.category].push(`- ${equipData.name}: ${statusText}${remark}`);
             }
         });
 
-        // ✅ ถ้ามี Error (มีจำนวนเกิน) ให้แจ้งเตือนผู้ใช้แทนที่จะส่งไปที่ LINE
         if (errorMessages.length > 0) {
             return res.status(400).json({ error: errorMessages.join("\n") });
         }
 
-        // ✅ ถ้าไม่มีปัญหา ให้สร้างข้อความปกติ
         Object.entries(categories).forEach(([category, items]) => {
             message += ` ${category}\n${items.join("\n")}\n\n`;
         });
 
-        // ✅ ส่งข้อความไปยัง LINE
+        // ✅ ส่งข้อความกลับไปยังผู้ใช้ที่ส่งแบบฟอร์ม
         await axios.post("https://api.line.me/v2/bot/message/push", {
-            to: process.env.LINE_USER_ID,
+            to: userId, // ✅ ใช้ userId ที่ส่งมาจาก Frontend
             messages: [{ type: "text", text: message }]
         }, {
             headers: {
