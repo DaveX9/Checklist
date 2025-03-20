@@ -447,7 +447,7 @@ app.post("/webhook", (req, res) => {
 // ✅ Submit Checklist & Notify LINE
 app.post("/submit-checklist", async (req, res) => {
     try {
-        console.log("📌 Received Data from Frontend:", req.body);
+        console.log("Received Data from Frontend:", req.body);
 
         const { inspector, plateNumber, equipment } = req.body;
         if (!inspector || !plateNumber || !equipment) {
@@ -499,7 +499,7 @@ app.post("/submit-checklist", async (req, res) => {
 
         // ✅ ถ้าไม่มีปัญหา ให้สร้างข้อความปกติ
         Object.entries(categories).forEach(([category, items]) => {
-            message += `📌 ${category}\n${items.join("\n")}\n\n`;
+            message += ` ${category}\n${items.join("\n")}\n\n`;
         });
 
         // ✅ ส่งข้อความไปยัง LINE
