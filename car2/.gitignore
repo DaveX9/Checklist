@@ -1,2 +1,35 @@
+# Environment variables (DO NOT COMMIT!)
 .env
+
+# Node.js dependencies (can be installed using npm install)
 node_modules/
+
+# Logs & Debug files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+
+# Build & Deployment Files
+.DS_Store
+dist/
+coverage/
+build/
+
+# Local Tools & Config Files
+.vscode/
+.idea/
+*.swp
+
+# Temporary Files
+*.tmp
+*.cache
+*.pid
+*.seed
+*.bak
+
+# Ngrok (if using for local testing)
+ngrok.exe
+ngrok.log
+

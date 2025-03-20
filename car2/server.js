@@ -446,14 +446,24 @@ app.post("/webhook", (req, res) => {
 // ✅ Submit Checklist & Notify LINE
 app.post("/submit-checklist", async (req, res) => {
     try {
-        console.log(" Received Data from Frontend:", req.body);
+        console.log("📌 Received Data from Frontend:", req.body);
 
         const { inspector, plateNumber, equipment } = req.body;
         if (!inspector || !plateNumber || !equipment) {
             return res.status(400).json({ error: "Incomplete data received!" });
         }
 
-        let message = `📋 ตรวจสอบโดย: ${inspector}\n🚗 ป้ายทะเบียน: ${plateNumber}\n\n`;
+        // ✅ สร้างวันที่และเวลาปัจจุบันในรูปแบบที่ต้องการ
+        const now = new Date();
+        const thaiMonthNames = [
+            "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+            "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+        ];
+        const thaiYear = now.getFullYear() + 543; // แปลงเป็น พ.ศ.
+        const thaiDate = `${now.getDate()} ${thaiMonthNames[now.getMonth()]} ${thaiYear}`;
+        const time = now.toLocaleTimeString("th-TH", { hour12: false });
+
+        let message = `📋 ตรวจสอบโดย: ${inspector}\n📅 วันที่: ${thaiDate} ${time}\n🚗 ป้ายทะเบียน: ${plateNumber}\n\n`;
         let categories = {};
         let errorMessages = []; // ✅ เก็บข้อความแจ้งเตือนหากจำนวนเกิน
 
@@ -488,7 +498,7 @@ app.post("/submit-checklist", async (req, res) => {
 
         // ✅ ถ้าไม่มีปัญหา ให้สร้างข้อความปกติ
         Object.entries(categories).forEach(([category, items]) => {
-            message += `${category}\n${items.join("\n")}\n\n`;
+            message += `📌 ${category}\n${items.join("\n")}\n\n`;
         });
 
         // ✅ ส่งข้อความไปยัง LINE
@@ -510,7 +520,6 @@ app.post("/submit-checklist", async (req, res) => {
         res.status(500).json({ error: "Failed to send checklist" });
     }
 });
-
 
 // ✅ Start Server
 app.listen(PORT, () => {
