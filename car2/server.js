@@ -9,12 +9,19 @@ console.log("🔑 LINE Access Token:", process.env.LINE_ACCESS_TOKEN ? "Loaded" 
 const mysql = require("mysql2/promise");
 
 const db = mysql.createPool({
-    host: process.env.DB_HOST,     // หรือ 'localhost'
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: process.env.DB_NAME,
-})
+    host: process.env.MYSQLHOST,
+    user: process.env.MYSQLUSER,
+    password: process.env.MYSQLPASSWORD,
+    database: process.env.MYSQLDATABASE,
+    port: process.env.MYSQLPORT || 3306,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
 
+db.getConnection()
+    .then(() => console.log("✅ Connected to Railway MySQL"))
+    .catch((err) => console.error("❌ MySQL Connection Failed:", err));
 // หมด
 const app = express();
 // const PORT = process.env.PORT || 3000;
