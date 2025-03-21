@@ -6,22 +6,22 @@ require("dotenv").config();
 console.log("🔑 LINE Access Token:", process.env.LINE_ACCESS_TOKEN ? "Loaded" : "Not Found!");
 
 // เพิ่ม
-const mysql = require("mysql2/promise");
+// const mysql = require("mysql2/promise");
 
-const db = mysql.createPool({
-    host: process.env.MYSQLHOST,
-    user: process.env.MYSQLUSER,
-    password: process.env.MYSQLPASSWORD,
-    database: process.env.MYSQLDATABASE,
-    port: process.env.MYSQLPORT || 3306,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
+// const db = mysql.createPool({
+//     host: process.env.MYSQLHOST,
+//     user: process.env.MYSQLUSER,
+//     password: process.env.MYSQLPASSWORD,
+//     database: process.env.MYSQLDATABASE,
+//     port: process.env.MYSQLPORT || 3306,
+//     waitForConnections: true,
+//     connectionLimit: 10,
+//     queueLimit: 0
+// });
 
-db.getConnection()
-    .then(() => console.log("✅ Connected to Railway MySQL"))
-    .catch((err) => console.error("❌ MySQL Connection Failed:", err));
+// db.getConnection()
+//     .then(() => console.log("✅ Connected to Railway MySQL"))
+//     .catch((err) => console.error("❌ MySQL Connection Failed:", err));
 // หมด
 const app = express();
 // const PORT = process.env.PORT || 3000;
@@ -293,9 +293,9 @@ app.get("/", (req, res) => {
 });
 
 // เพม
-app.get("/history", (req, res) => {
-    res.render("history"); // ไม่ต้องใส่นามสกุล .ejs
-});
+// app.get("/history", (req, res) => {
+//     res.render("history"); // ไม่ต้องใส่นามสกุล .ejs
+// });
 // หมด
 
 // ✅ Fetch Checklist Based on License Plate
@@ -308,20 +308,20 @@ app.get("/get-checklist-form/:plateNumber", (req, res) => {
 });
 
 // เพิม
-app.get("/checklist-history/:userId", async (req, res) => {
-    const { userId } = req.params;
+// app.get("/checklist-history/:userId", async (req, res) => {
+//     const { userId } = req.params;
 
-    try {
-        const [rows] = await db.query(
-            `SELECT * FROM vehicle_checklists WHERE user_id = ? AND submitted_at >= NOW() - INTERVAL 7 DAY ORDER BY submitted_at DESC`,
-            [userId]
-        );
-        res.json(rows);
-    } catch (error) {
-        console.error("❌ ดึงข้อมูลล้มเหลว:", error);
-        res.status(500).json({ error: "ไม่สามารถดึงข้อมูลได้" });
-    }
-});
+//     try {
+//         const [rows] = await db.query(
+//             `SELECT * FROM vehicle_checklists WHERE user_id = ? AND submitted_at >= NOW() - INTERVAL 7 DAY ORDER BY submitted_at DESC`,
+//             [userId]
+//         );
+//         res.json(rows);
+//     } catch (error) {
+//         console.error("❌ ดึงข้อมูลล้มเหลว:", error);
+//         res.status(500).json({ error: "ไม่สามารถดึงข้อมูลได้" });
+//     }
+// });
 //  หมด
 
 
@@ -380,16 +380,16 @@ app.post("/submit-checklist", async (req, res) => {
         }
 
         // เพิม
-        try {
-            await db.query(
-                `INSERT INTO vehicle_checklists (user_id, inspector, plate_number, equipment) VALUES (?, ?, ?, ?)`,
-                [userId, inspector, plateNumber, JSON.stringify(equipment)]
-            );
-            res.status(200).json({ message: "✅ บันทึกข้อมูลสำเร็จ!" });
-        } catch (error) {
-            console.error("❌ เกิดข้อผิดพลาดในการบันทึก:", error);
-            res.status(500).json({ error: "บันทึกไม่สำเร็จ" });
-        }
+        // try {
+        //     await db.query(
+        //         `INSERT INTO vehicle_checklists (user_id, inspector, plate_number, equipment) VALUES (?, ?, ?, ?)`,
+        //         [userId, inspector, plateNumber, JSON.stringify(equipment)]
+        //     );
+        //     res.status(200).json({ message: "✅ บันทึกข้อมูลสำเร็จ!" });
+        // } catch (error) {
+        //     console.error("❌ เกิดข้อผิดพลาดในการบันทึก:", error);
+        //     res.status(500).json({ error: "บันทึกไม่สำเร็จ" });
+        // }
 
         // หมด
 
