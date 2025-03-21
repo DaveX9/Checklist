@@ -5,6 +5,17 @@ const path = require("path");
 require("dotenv").config();
 console.log("🔑 LINE Access Token:", process.env.LINE_ACCESS_TOKEN ? "Loaded" : "Not Found!");
 
+// เพิ่ม
+const mysql = require("mysql2/promise");
+
+const db = mysql.createPool({
+    host: process.env.DB_HOST,     // หรือ 'localhost'
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME,
+})
+
+// หมด
 const app = express();
 // const PORT = process.env.PORT || 3000;
 const PORT = process.env.PORT || 8080; // ✅ Use Railway-assigned PORT
@@ -274,6 +285,12 @@ app.get("/", (req, res) => {
     res.render("index", { cars });
 });
 
+// เพม
+app.get("/history", (req, res) => {
+    res.render("history"); // ไม่ต้องใส่นามสกุล .ejs
+});
+// หมด
+
 // ✅ Fetch Checklist Based on License Plate
 app.get("/get-checklist-form/:plateNumber", (req, res) => {
     const checklist = checklists[req.params.plateNumber];
@@ -282,6 +299,27 @@ app.get("/get-checklist-form/:plateNumber", (req, res) => {
     }
     res.json({ plateNumber: req.params.plateNumber, checklist });
 });
+
+// เพิม
+app.get("/checklist-history/:userId", async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+        const [rows] = await db.query(
+            `SELECT * FROM vehicle_checklists WHERE user_id = ? AND submitted_at >= NOW() - INTERVAL 7 DAY ORDER BY submitted_at DESC`,
+            [userId]
+        );
+        res.json(rows);
+    } catch (error) {
+        console.error("❌ ดึงข้อมูลล้มเหลว:", error);
+        res.status(500).json({ error: "ไม่สามารถดึงข้อมูลได้" });
+    }
+});
+//  หมด
+
+
+
+
 
 // ✅ LINE Webhook Route
 app.post("/webhook", (req, res) => {
@@ -333,6 +371,20 @@ app.post("/submit-checklist", async (req, res) => {
         if (!userId || !inspector || !plateNumber || !equipment) {
             return res.status(400).json({ error: "Incomplete data received!" });
         }
+
+        // เพิม
+        try {
+            await db.query(
+                `INSERT INTO vehicle_checklists (user_id, inspector, plate_number, equipment) VALUES (?, ?, ?, ?)`,
+                [userId, inspector, plateNumber, JSON.stringify(equipment)]
+            );
+            res.status(200).json({ message: "✅ บันทึกข้อมูลสำเร็จ!" });
+        } catch (error) {
+            console.error("❌ เกิดข้อผิดพลาดในการบันทึก:", error);
+            res.status(500).json({ error: "บันทึกไม่สำเร็จ" });
+        }
+
+        // หมด
 
         console.log("📤 Sending Message to LINE User:", userId);
 

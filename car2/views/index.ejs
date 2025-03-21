@@ -216,7 +216,16 @@
         <div class="accordion mt-3" id="inspectionAccordion"></div>
 
         <button class="btn btn-primary w-100 mt-3" id="submitChecklist">บันทึกข้อมูล</button>
+        <button class="btn btn-secondary w-100 mt-3" onclick="openHistory()">📜 ดูประวัติ</button>
     </div>
+    <script>
+        function openHistory() {
+            liff.openWindow({
+                url: "https://liff.line.me/2007063611-2LjAaylQ/history",
+                external: false, // ให้เปิดใน LIFF
+            });
+        }
+    </script>
 
 
     <script>
