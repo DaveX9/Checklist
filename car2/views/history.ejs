@@ -9,7 +9,12 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
 </head>
-
+<style>
+    th, td {
+        text-align: center;
+        vertical-align: middle;
+    }
+</style>
 <body>
     <div class="container mt-5">
         <h2 class="text-center mb-4">📜 ประวัติการตรวจสอบย้อนหลัง 7 วัน</h2>
@@ -282,72 +287,131 @@
             }
         }
 
+        // function loadHistory(userId) {
+        //     $.get(`/checklist-history/${userId}`, function (data) {
+        //         if (!data.length) {
+        //             $("#historyList").html('<div class="alert alert-info">ไม่มีประวัติในช่วง 7 วัน</div>');
+        //             return;
+        //         }
+
+        //         let html = "";
+        //         data.forEach(entry => {
+        //             let equipment = [];
+        //             try {
+        //                 equipment = typeof entry.equipment === "string"
+        //                     ? JSON.parse(entry.equipment)
+        //                     : Array.isArray(entry.equipment)
+        //                         ? entry.equipment
+        //                         : [];
+        //             } catch (e) {
+        //                 console.error("❌ JSON parse failed:", e, entry.equipment);
+        //             }
+
+        //             const checklist = checklists[entry.plate_number] || [];
+        //             const grouped = {};
+
+        //             equipment.forEach(item => {
+        //                 checklist.forEach(cat => {
+        //                     const found = cat.details.find(d => d.id === item.name);
+        //                     if (found) {
+        //                         if (!grouped[cat.category]) grouped[cat.category] = [];
+
+        //                         const qty = item.quantity || 0;
+        //                         const expected = found.expected || 0;
+        //                         let statusText = qty > 0 ? `มี ${qty}` : "ไม่มี";
+
+        //                         if (expected > 0) {
+        //                             if (qty === expected) {
+        //                                 statusText += " ครบ";
+        //                             } else if (qty < expected) {
+        //                                 statusText += ` ขาด ${expected - qty}`;
+        //                             }
+        //                         }
+
+        //                         const remark = item.remark ? ` ${item.remark}` : "";
+        //                         const line = `- ${found.name}: ${statusText}${remark}`;
+        //                         grouped[cat.category].push(line);
+        //                     }
+        //                 });
+        //             });
+
+        //             let block = `
+        //                 <div class="list-group-item">
+        //                 <h5>🚗 ป้ายทะเบียน: ${entry.plate_number}</h5>
+        //                 <p>👤 ผู้ตรวจ: ${entry.inspector}</p>
+        //                 <p>🕒 วันที่: ${new Date(entry.submitted_at).toLocaleString("th-TH")}</p>
+        //             `;
+
+        //             Object.entries(grouped).forEach(([category, items]) => {
+        //                 block += `<strong>${category}</strong><ul>${items.map(i => `<li>${i}</li>`).join("")}</ul>`;
+        //             });
+
+        //             block += `</div>`;
+        //             html += block;
+        //         });
+
+        //         $("#historyList").html(html);
+        //     }).fail(() => {
+        //         $("#historyList").html('<div class="alert alert-danger">❌ ดึงข้อมูลไม่สำเร็จ</div>');
+        //     });
+        // }
         function loadHistory(userId) {
-            $.get(`/checklist-history/${userId}`, function (data) {
-                if (!data.length) {
-                    $("#historyList").html('<div class="alert alert-info">ไม่มีประวัติในช่วง 7 วัน</div>');
+            $.get(`/checklist-history/${userId}`, function (entries) {
+                if (!entries.length) {
+                    $("#historyTableContainer").html('<div class="alert alert-info">ไม่มีข้อมูลในช่วง 7 วัน</div>');
                     return;
                 }
 
-                let html = "";
-                data.forEach(entry => {
-                    let equipment = [];
-                    try {
-                        equipment = typeof entry.equipment === "string"
-                            ? JSON.parse(entry.equipment)
-                            : Array.isArray(entry.equipment)
-                                ? entry.equipment
-                                : [];
-                    } catch (e) {
-                        console.error("❌ JSON parse failed:", e, entry.equipment);
-                    }
+                const grouped = {};
+                const dates = [];
+
+                entries.forEach(entry => {
+                    const date = formatDate(entry.submitted_at);
+                    dates.push(date);
+                    const equipment = typeof entry.equipment === "string" ? JSON.parse(entry.equipment) : entry.equipment;
 
                     const checklist = checklists[entry.plate_number] || [];
-                    const grouped = {};
-
                     equipment.forEach(item => {
                         checklist.forEach(cat => {
                             const found = cat.details.find(d => d.id === item.name);
                             if (found) {
-                                if (!grouped[cat.category]) grouped[cat.category] = [];
-
+                                const name = found.name;
+                                if (!grouped[name]) grouped[name] = {};
                                 const qty = item.quantity || 0;
                                 const expected = found.expected || 0;
-                                let statusText = qty > 0 ? `มี ${qty}` : "ไม่มี";
-
+                                let status = qty > 0 ? `มี ${qty}` : "ไม่มี";
                                 if (expected > 0) {
-                                    if (qty === expected) {
-                                        statusText += " ครบ";
-                                    } else if (qty < expected) {
-                                        statusText += ` ขาด ${expected - qty}`;
-                                    }
+                                    if (qty === expected) status += " ครบ";
+                                    else if (qty < expected) status += ` ขาด ${expected - qty}`;
                                 }
-
-                                const remark = item.remark ? ` ${item.remark}` : "";
-                                const line = `- ${found.name}: ${statusText}${remark}`;
-                                grouped[cat.category].push(line);
+                                if (item.remark) status += ` ${item.remark}`;
+                                grouped[name][date] = status;
                             }
                         });
                     });
-
-                    let block = `
-                        <div class="list-group-item">
-                        <h5>🚗 ป้ายทะเบียน: ${entry.plate_number}</h5>
-                        <p>👤 ผู้ตรวจ: ${entry.inspector}</p>
-                        <p>🕒 วันที่: ${new Date(entry.submitted_at).toLocaleString("th-TH")}</p>
-                    `;
-
-                    Object.entries(grouped).forEach(([category, items]) => {
-                        block += `<strong>${category}</strong><ul>${items.map(i => `<li>${i}</li>`).join("")}</ul>`;
-                    });
-
-                    block += `</div>`;
-                    html += block;
                 });
 
-                $("#historyList").html(html);
+                // Sort วันที่
+                const sortedDates = [...new Set(dates)].sort((a, b) => new Date(b) - new Date(a));
+
+                let html = '<table class="table table-bordered table-striped"><thead><tr><th>อุปกรณ์</th>';
+                sortedDates.forEach(date => {
+                    html += `<th>${date}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+
+                Object.entries(grouped).forEach(([name, dateStatus]) => {
+                    html += `<tr><td>${name}</td>`;
+                    sortedDates.forEach(date => {
+                        html += `<td>${dateStatus[date] || '-'}</td>`;
+                    });
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table>';
+                $("#historyTableContainer").html(html);
             }).fail(() => {
-                $("#historyList").html('<div class="alert alert-danger">❌ ดึงข้อมูลไม่สำเร็จ</div>');
+                $("#historyTableContainer").html('<div class="alert alert-danger">❌ ดึงข้อมูลไม่สำเร็จ</div>');
             });
         }
 
