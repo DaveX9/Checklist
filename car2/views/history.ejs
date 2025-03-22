@@ -391,17 +391,21 @@
                     return;
                 }
 
-                // ✅ แสดงข้อมูลล่าสุด
-                const latest = entries[0];
-                const submittedAt = toThaiDateTime(latest.submitted_at);
-                const latestHtml = `
-                    <p>📋 ตรวจสอบโดย: ${latest.inspector}</p>
-                    <p>📅 วันที่: ${submittedAt}</p>
-                    <p>🚗 ป้ายทะเบียน: ${latest.plate_number}</p>
-                `;
-                $("#latestInfo").html(latestHtml);
+                // ✅ แสดงทุกการตรวจย้อนหลัง 7 วัน
+                let inspectorHtml = "";
+                entries.forEach(entry => {
+                    inspectorHtml += `
+        <div class="mb-2">
+          <p>📋 ตรวจสอบโดย: ${entry.inspector}</p>
+          <p>📅 วันที่: ${toThaiDateTime(entry.submitted_at)}</p>
+          <p>🚗 ป้ายทะเบียน: ${entry.plate_number}</p>
+          <hr>
+        </div>
+      `;
+                });
+                $("#latestInfo").html(inspectorHtml);
 
-                // ✅ สร้างตาราง
+                // ✅ สร้างตารางสรุป
                 const grouped = {};
                 const dates = [];
 
@@ -453,6 +457,7 @@
                 $("#historyTableContainer").html('<div class="alert alert-danger">❌ ดึงข้อมูลไม่สำเร็จ</div>');
             });
         }
+
 
 
         initializeLiff();
