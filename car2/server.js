@@ -334,22 +334,28 @@ app.post("/webhook", (req, res) => {
     // Acknowledge receipt of webhook
     res.sendStatus(200);
 
-    // Process the event (e.g., responding to messages)
     const events = req.body.events;
     events.forEach(async (event) => {
         if (event.type === "message" && event.message.type === "text") {
-            const userMessage = event.message.text;
+            const userMessage = event.message.text.trim();
             const replyToken = event.replyToken;
 
-            // ✅ กรณี "ดูข้อมูลย้อนหลัง"
+            // ✅ ข้ามข้อความที่ admin ตั้ง auto-response บน LINE OA เช่น "1", "2", "เมนู"
+            const reservedKeywords = ["1", "2", "เมนู"];
+            if (reservedKeywords.includes(userMessage)) {
+                console.log("⏩ ข้ามข้อความ auto-response:", userMessage);
+                return;
+            }
+
+            // ✅ ดูข้อมูลย้อนหลัง
             if (userMessage === "ดูข้อมูลย้อนหลัง") {
                 const userId = event.source.userId;
 
                 try {
                     const [rows] = await db.query(
                         `SELECT plate_number, inspector, submitted_at FROM vehicle_checklists 
-                            WHERE user_id = ? AND submitted_at >= NOW() - INTERVAL 7 DAY
-                            ORDER BY submitted_at DESC LIMIT 10`, [userId]
+                        WHERE user_id = ? AND submitted_at >= NOW() - INTERVAL 7 DAY
+                        ORDER BY submitted_at DESC LIMIT 10`, [userId]
                     );
 
                     let responseText;
@@ -390,33 +396,10 @@ app.post("/webhook", (req, res) => {
                     });
                 }
 
-                return; // ✅ หยุดเพื่อไม่ให้ไปตอบ default
+                return;
             }
 
-            // เพิ่ม
-            if (userMessage === "1") {
-                const howToText = `📝 วิธีการใช้งานระบบ Checklists:
-                1. กดเมนู แบบฟอร์ม 
-                2. ระบบจะแสดงแบบฟอร์มเช็กลิสต์ 
-                3. ใส่ชื่อผู้ตรวจ และเลือกทะเบียนรถที่ต้องการเช็ก (วันและเวลา อัตโนมัติ) 
-                4. กดบันทึกข้อมูล และเริ่มทำแบบฟอร์มกันเลย!`;
-            
-                await axios.post("https://api.line.me/v2/bot/message/reply", {
-                    replyToken,
-                    messages: [{ type: "text", text: howToText }]
-                }, {
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${process.env.LINE_ACCESS_TOKEN}`
-                    }
-                });
-            
-                return; // ✅ จบที่นี่
-            }
-
-            //หมด
-            
-            // ✅ เงื่อนไขปกติสำหรับพิมพ์ทะเบียน
+            // ✅ ตรวจสอบรายการอุปกรณ์โดยใช้ป้ายทะเบียน
             let responseText = "🚗 กรุณาพิมพ์ป้ายทะเบียนเพื่อดูจำนวนของสินค้า!";
             if (cars[userMessage]) {
                 responseText = `🔎 รายการตรวจสอบสำหรับ ${userMessage}:\n\n`;
@@ -441,8 +424,8 @@ app.post("/webhook", (req, res) => {
             });
         }
     });
-
 });
+
 
 // ✅ Submit Checklist & Notify LINE
 app.post("/submit-checklist", async (req, res) => {
