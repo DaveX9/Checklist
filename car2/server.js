@@ -398,17 +398,17 @@ app.post("/webhook", (req, res) => {
 
             // // ✅ เงื่อนไขปกติสำหรับพิมพ์ทะเบียน
             // let responseText = "🚗 กรุณาพิมพ์ป้ายทะเบียนเพื่อตรวจสอบ!";
-            if (cars[userMessage]) {
-                responseText = `🔎 รายการตรวจสอบสำหรับ ${userMessage}:\n\n`;
-                const checklist = checklists[userMessage] || [];
-                checklist.forEach(cat => {
-                    responseText += ` ${cat.category}\n`;
-                    cat.details.forEach(item => {
-                        responseText += `- ${item.name} ${item.expected ? `(ต้องมี ${item.expected})` : ""}\n`;
-                    });
-                    responseText += "\n";
-                });
-            }
+            // if (cars[userMessage]) {
+            //     responseText = `🔎 รายการตรวจสอบสำหรับ ${userMessage}:\n\n`;
+            //     const checklist = checklists[userMessage] || [];
+            //     checklist.forEach(cat => {
+            //         responseText += ` ${cat.category}\n`;
+            //         cat.details.forEach(item => {
+            //             responseText += `- ${item.name} ${item.expected ? `(ต้องมี ${item.expected})` : ""}\n`;
+            //         });
+            //         responseText += "\n";
+            //     });
+            // }
 
             await axios.post("https://api.line.me/v2/bot/message/reply", {
                 replyToken,
