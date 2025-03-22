@@ -230,7 +230,7 @@ const checklists = {
                 { id: "tank", name: "ถัง", expected: 5 },
                 { id: "cloth", name: "ผ้าเช็ดเท้า", expected: 13 },
                 { id: "psc", name: "ดินน้ำมัน", expected: 1 },
-                { id: "rbt", name: "สายยาง", expected: 3},
+                { id: "rbt", name: "สายยาง", expected: 3 },
                 { id: "bgs", name: "เกตุ", expected: 1 },
                 { id: "bread", name: "ขนมปัง", expected: 1 }
             ]
@@ -239,7 +239,7 @@ const checklists = {
             category: "3. อุปกรณ์สำหรับหลังคา", details: [
                 { id: "gst", name: "บันไดใหญ่", expected: 1 },
                 { id: "sst", name: "บันไดเล็ก", expected: 1 },
-                { id: "fld", name: "บันไดลิง", expected: 1 }, 
+                { id: "fld", name: "บันไดลิง", expected: 1 },
                 { id: "tch", name: "ไฟฉาย", expected: 1 }
             ]
         },
@@ -262,7 +262,7 @@ const checklists = {
                 { id: "asts", name: "ป้ายทุกระบบ", expected: 1 },
                 { id: "btr", name: "ถ่าน", expected: 1 },
                 { id: "plug", name: "ปลั๊ก", expected: 2 },
-                { id: "clc", name: "ผ้า + แอลกอฮอล์" ,expected: 1 } 
+                { id: "clc", name: "ผ้า + แอลกอฮอล์", expected: 1 }
             ]
         },
         {
@@ -344,6 +344,59 @@ app.post("/webhook", (req, res) => {
             const userMessage = event.message.text;
             const replyToken = event.replyToken;
 
+            // ✅ กรณี "ดูข้อมูลย้อนหลัง"
+            if (userMessage === "ดูข้อมูลย้อนหลัง") {
+                const userId = event.source.userId;
+
+                try {
+                    const [rows] = await db.query(
+                        `SELECT plate_number, inspector, submitted_at FROM vehicle_checklists 
+                         WHERE user_id = ? AND submitted_at >= NOW() - INTERVAL 7 DAY
+                         ORDER BY submitted_at DESC LIMIT 10`, [userId]
+                    );
+
+                    let responseText;
+                    if (rows.length === 0) {
+                        responseText = "❌ ไม่พบข้อมูลย้อนหลังใน 7 วันที่ผ่านมา";
+                    } else {
+                        responseText = "📋 ข้อมูลย้อนหลัง 7 วัน:\n";
+                        rows.forEach(row => {
+                            const date = new Date(row.submitted_at).toLocaleString("th-TH", {
+                                dateStyle: "short",
+                                timeStyle: "short",
+                                timeZone: "Asia/Bangkok"
+                            });
+                            responseText += `\n📅 ${date}\n👷‍♂️ ${row.inspector}\n🚗 ${row.plate_number}\n`;
+                        });
+                    }
+
+                    await axios.post("https://api.line.me/v2/bot/message/reply", {
+                        replyToken,
+                        messages: [{ type: "text", text: responseText }]
+                    }, {
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${process.env.LINE_ACCESS_TOKEN}`
+                        }
+                    });
+
+                } catch (err) {
+                    console.error("❌ ดึงข้อมูลย้อนหลังล้มเหลว:", err);
+                    await axios.post("https://api.line.me/v2/bot/message/reply", {
+                        replyToken,
+                        messages: [{ type: "text", text: "⚠️ ไม่สามารถดึงข้อมูลย้อนหลังได้" }]
+                    }, {
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${process.env.LINE_ACCESS_TOKEN}`
+                        }
+                    });
+                }
+
+                return; // ✅ หยุดเพื่อไม่ให้ไปตอบ default
+            }
+
+            // ✅ เงื่อนไขปกติสำหรับพิมพ์ทะเบียน
             let responseText = "🚗 กรุณาพิมพ์ป้ายทะเบียนเพื่อตรวจสอบ!";
             if (cars[userMessage]) {
                 responseText = `🔎 รายการตรวจสอบสำหรับ ${userMessage}:\n\n`;
@@ -357,9 +410,8 @@ app.post("/webhook", (req, res) => {
                 });
             }
 
-            // Send a reply message
             await axios.post("https://api.line.me/v2/bot/message/reply", {
-                replyToken: replyToken,
+                replyToken,
                 messages: [{ type: "text", text: responseText }]
             }, {
                 headers: {
@@ -369,6 +421,7 @@ app.post("/webhook", (req, res) => {
             });
         }
     });
+
 });
 
 // ✅ Submit Checklist & Notify LINE
