@@ -10,18 +10,24 @@
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
 </head>
 <style>
-    th, td {
+    th,
+    td {
         text-align: center;
         vertical-align: middle;
     }
 </style>
+
 <body>
     <div class="container mt-5">
         <h2 class="text-center mb-4">📜 ประวัติการตรวจสอบย้อนหลัง 7 วัน</h2>
-        <!-- 🔽 เพิ่มส่วนนี้ -->
+        <!-- ✅ ส่วนแสดงข้อมูลล่าสุด -->
+        <div id="latestInfo" class="mb-4 fs-5"></div>
+
+        <!-- ✅ ส่วนตาราง -->
         <div id="historyTableContainer"></div>
     </div>
-    
+
+
 
     <!-- ✅ preload checklists จาก server -->
     <script>
@@ -272,6 +278,19 @@
 
 
     <script>
+        function toThaiDateTime(datetime) {
+            const date = new Date(datetime);
+            return date.toLocaleString("th-TH", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                timeZone: "Asia/Bangkok"
+            });
+        }
+
         function formatDate(dateStr) {
             const date = new Date(dateStr);
             return date.toLocaleDateString("th-TH", {
@@ -280,7 +299,6 @@
                 year: 'numeric'
             });
         }
-
         async function initializeLiff() {
             try {
                 await liff.init({ liffId: "2007063611-2LjAaylQ" });
@@ -373,6 +391,17 @@
                     return;
                 }
 
+                // ✅ แสดงข้อมูลล่าสุด
+                const latest = entries[0];
+                const submittedAt = toThaiDateTime(latest.submitted_at);
+                const latestHtml = `
+                    <p>📋 ตรวจสอบโดย: ${latest.inspector}</p>
+                    <p>📅 วันที่: ${submittedAt}</p>
+                    <p>🚗 ป้ายทะเบียน: ${latest.plate_number}</p>
+                `;
+                $("#latestInfo").html(latestHtml);
+
+                // ✅ สร้างตาราง
                 const grouped = {};
                 const dates = [];
 
@@ -380,8 +409,8 @@
                     const date = formatDate(entry.submitted_at);
                     dates.push(date);
                     const equipment = typeof entry.equipment === "string" ? JSON.parse(entry.equipment) : entry.equipment;
-
                     const checklist = checklists[entry.plate_number] || [];
+
                     equipment.forEach(item => {
                         checklist.forEach(cat => {
                             const found = cat.details.find(d => d.id === item.name);
@@ -402,8 +431,7 @@
                     });
                 });
 
-                // Sort วันที่
-                const sortedDates = [...new Set(dates)].sort((a, b) => new Date(b) - new Date(a));
+                const sortedDates = [...new Set(dates)].sort((a, b) => new Date(a) - new Date(b));
 
                 let html = '<table class="table table-bordered table-striped"><thead><tr><th>อุปกรณ์</th>';
                 sortedDates.forEach(date => {
@@ -425,6 +453,7 @@
                 $("#historyTableContainer").html('<div class="alert alert-danger">❌ ดึงข้อมูลไม่สำเร็จ</div>');
             });
         }
+
 
         initializeLiff();
     </script>
