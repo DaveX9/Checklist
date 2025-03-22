@@ -296,7 +296,7 @@ app.get("/", (req, res) => {
 
 // เพิม
 app.get("/history", (req, res) => {
-    res.render("history",{ checklists }); // ไม่ต้องใส่นามสกุล .ejs
+    res.render("history", { checklists }); // ไม่ต้องใส่นามสกุล .ejs
 });
 // หมด
 
@@ -396,19 +396,28 @@ app.post("/webhook", (req, res) => {
                 return; // ✅ หยุดเพื่อไม่ให้ไปตอบ default
             }
 
-            // // ✅ เงื่อนไขปกติสำหรับพิมพ์ทะเบียน
-            // let responseText = "🚗 กรุณาพิมพ์ป้ายทะเบียนเพื่อตรวจสอบ!";
-            // if (cars[userMessage]) {
-            //     responseText = `🔎 รายการตรวจสอบสำหรับ ${userMessage}:\n\n`;
-            //     const checklist = checklists[userMessage] || [];
-            //     checklist.forEach(cat => {
-            //         responseText += ` ${cat.category}\n`;
-            //         cat.details.forEach(item => {
-            //             responseText += `- ${item.name} ${item.expected ? `(ต้องมี ${item.expected})` : ""}\n`;
-            //         });
-            //         responseText += "\n";
-            //     });
-            // }
+            
+            // ✅ กันข้อความที่ admin ตั้ง auto-response ไว้ใน LINE OA
+            const reservedKeywords = ["1", "2", "เมนู", "ดูข้อมูลย้อนหลัง"];
+            if (reservedKeywords.includes(userMessage.trim())) {
+                console.log("⏩ ข้ามข้อความที่จัดการผ่าน LINE OA:", userMessage);
+                return; // ❗ หยุดที่นี่ ไม่ให้ bot ตอบข้อความนี้ซ้ำ
+            }
+            
+            // ✅ เงื่อนไขปกติสำหรับพิมพ์ทะเบียน
+            let responseText = "🚗 กรุณาพิมพ์ป้ายทะเบียนเพื่อตรวจสอบ!";
+            if (cars[userMessage]) {
+                responseText = `🔎 รายการตรวจสอบสำหรับ ${userMessage}:\n\n`;
+                const checklist = checklists[userMessage] || [];
+                checklist.forEach(cat => {
+                    responseText += ` ${cat.category}\n`;
+                    cat.details.forEach(item => {
+                        responseText += `- ${item.name} ${item.expected ? `(ต้องมี ${item.expected})` : ""}\n`;
+                    });
+                    responseText += "\n";
+                });
+            }
+            
 
             await axios.post("https://api.line.me/v2/bot/message/reply", {
                 replyToken,
