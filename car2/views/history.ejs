@@ -61,7 +61,7 @@
                             <p>👤 ผู้ตรวจ: ${entry.inspector}</p>
                             <p>🕒 วันที่: ${new Date(entry.submitted_at).toLocaleString("th-TH")}</p>
                             <ul>
-                                ${equipment.map(e => `<li>${e.name} - ${e.quantity || 0} ชิ้น (${e.remark || '-'})</li>`).join("")}
+                                ${equipment.map(e => `<li>${e.name} - ${e.quantity || 0}  ${e.remark || '-'}</li>`).join("")}
                             </ul>
                         </div>
                     `;
