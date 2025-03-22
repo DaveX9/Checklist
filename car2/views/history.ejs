@@ -310,7 +310,21 @@
                             const found = cat.details.find(d => d.id === item.name);
                             if (found) {
                                 if (!grouped[cat.category]) grouped[cat.category] = [];
-                                const line = `- ${found.name} - ${item.quantity || 0} ${item.remark || ""}`;
+
+                                const qty = item.quantity || 0;
+                                const expected = found.expected || 0;
+                                let statusText = qty > 0 ? `มี ${qty}` : "ไม่มี";
+
+                                if (expected > 0) {
+                                    if (qty === expected) {
+                                        statusText += " ครบ";
+                                    } else if (qty < expected) {
+                                        statusText += ` ขาด ${expected - qty}`;
+                                    }
+                                }
+
+                                const remark = item.remark ? ` ${item.remark}` : "";
+                                const line = `- ${found.name}: ${statusText}${remark}`;
                                 grouped[cat.category].push(line);
                             }
                         });
