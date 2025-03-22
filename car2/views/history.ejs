@@ -310,7 +310,7 @@
                             const found = cat.details.find(d => d.id === item.name);
                             if (found) {
                                 if (!grouped[cat.category]) grouped[cat.category] = [];
-                                const line = `- ${found.name} - ${item.quantity || 0} (${item.remark || "-"})`;
+                                const line = `- ${found.name} - ${item.quantity || 0} ${item.remark || ""}`;
                                 grouped[cat.category].push(line);
                             }
                         });
