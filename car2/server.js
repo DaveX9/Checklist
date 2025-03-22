@@ -22,7 +22,9 @@ console.log("🔑 LINE Access Token:", process.env.LINE_ACCESS_TOKEN ? "Loaded" 
 // db.getConnection()
 //     .then(() => console.log("✅ Connected to Railway MySQL"))
 //     .catch((err) => console.error("❌ MySQL Connection Failed:", err));
-หมด
+// หมด
+
+
 const app = express();
 // const PORT = process.env.PORT || 3000;
 const PORT = process.env.PORT || 8080; // ✅ Use Railway-assigned PORT
@@ -292,7 +294,7 @@ app.get("/", (req, res) => {
     res.render("index", { cars });
 });
 
-// เพม
+// เพิม
 // app.get("/history", (req, res) => {
 //     res.render("history"); // ไม่ต้องใส่นามสกุล .ejs
 // });
