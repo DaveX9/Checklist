@@ -440,7 +440,9 @@ app.post("/submit-checklist", async (req, res) => {
                 `INSERT INTO vehicle_checklists (user_id, inspector, plate_number, equipment) VALUES (?, ?, ?, ?)`,
                 [userId, inspector, plateNumber, JSON.stringify(equipment)] // ← ต้อง JSON.stringify!
             );
-            res.status(200).json({ message: "✅ บันทึกข้อมูลสำเร็จ!" });
+
+            // res.status(200).json({ message: "✅ บันทึกข้อมูลสำเร็จ!" });
+            
         } catch (error) {
             console.error("❌ เกิดข้อผิดพลาดในการบันทึก:", error);
             res.status(500).json({ error: "บันทึกไม่สำเร็จ" });
