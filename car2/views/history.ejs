@@ -12,10 +12,20 @@
 <style>
     th,
     td {
-        text-align: center;
-        vertical-align: middle;
+        text-align: left !important;
+        vertical-align: top;
     }
-</style>
+
+    .table-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .category-row {
+        font-weight: bold;
+        background-color: #f0f0f0;
+    }
+</style>>
 
 <body>
     <div class="container mt-5">
@@ -289,21 +299,18 @@
     <script>
         function formatDate(dateStr) {
             const date = new Date(dateStr);
-            return date.toLocaleDateString("th-TH", {
-                day: 'numeric', month: 'numeric', year: 'numeric'
-            });
+            return date.toLocaleDateString("th-TH", { day: 'numeric', month: 'numeric', year: 'numeric' });
         }
 
         function toThaiDateTime(dateStr) {
-            const d = new Date(dateStr);
-            return d.toLocaleDateString("th-TH", {
-                day: 'numeric', month: 'long', year: 'numeric'
-            }) + ' เวลา ' + d.toLocaleTimeString("th-TH").replace(/:\d+$/, "");
+            const date = new Date(dateStr);
+            return date.toLocaleString("th-TH", { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
 
         async function initializeLiff() {
             try {
                 await liff.init({ liffId: "2007063611-2LjAaylQ" });
+
                 if (!liff.isLoggedIn()) {
                     liff.login();
                 } else {
@@ -311,9 +318,9 @@
                     const userId = profile.userId;
                     console.log("📢 userId:", userId);
 
-                    $("#plateSelector").on("change", () => {
-                        const selected = $("#plateSelector").val();
-                        if (selected) loadHistory(userId, selected);
+                    $("#plateSelector").on("change", function () {
+                        const selectedPlate = $(this).val();
+                        if (selectedPlate) loadHistory(userId, selectedPlate);
                     });
                 }
             } catch (error) {
@@ -326,67 +333,69 @@
                 const filtered = entries.filter(e => e.plate_number === selectedPlate);
                 if (!filtered.length) {
                     $("#historyTableContainer").html('<div class="alert alert-warning">ไม่มีข้อมูล</div>');
-                    $("#latestInfo").html("");
                     return;
                 }
 
+                // ดึงข้อมูลผู้ตรวจล่าสุด
                 const latest = filtered[0];
                 const submittedAt = toThaiDateTime(latest.submitted_at);
                 const latestHtml = `
-                    <p>📋 ตรวจสอบโดย: ${latest.inspector}</p>
-                    <p>📅 วันที่: ${submittedAt}</p>
-                    <p>🚗 ป้ายทะเบียน: ${latest.plate_number}</p>
-                `;
+                <p>📋 ตรวจสอบโดย: ${latest.inspector}</p>
+                <p>📅 วันที่: ${submittedAt}</p>
+                <p>🚗 ป้ายทะเบียน: ${latest.plate_number}</p>
+            `;
                 $("#latestInfo").html(latestHtml);
 
-                const checklist = checklists[latest.plate_number] || [];
-                const dates = [...new Set(filtered.map(e => formatDate(e.submitted_at)))];
-
-                // สร้างโครงสร้างเก็บข้อมูลแยกหมวด
-                const categoryMap = {};
-                checklist.forEach(cat => {
-                    categoryMap[cat.category] = cat.details.map(d => d.name);
-                });
-
-                const statusMap = {};
-                Object.keys(categoryMap).forEach(cat => {
-                    statusMap[cat] = {};
-                    categoryMap[cat].forEach(name => {
-                        statusMap[cat][name] = {};
-                    });
-                });
+                const grouped = {};
+                const dates = [];
 
                 filtered.forEach(entry => {
                     const date = formatDate(entry.submitted_at);
+                    dates.push(date);
                     const equipment = typeof entry.equipment === "string" ? JSON.parse(entry.equipment) : entry.equipment;
-                    const itemMap = {};
-                    equipment.forEach(item => itemMap[item.name] = item);
+                    const checklist = checklists[entry.plate_number] || [];
 
                     checklist.forEach(cat => {
-                        cat.details.forEach(d => {
-                            const item = itemMap[d.id];
-                            const qty = item?.quantity || 0;
-                            const expected = d.expected || 0;
-                            let status = qty > 0 ? `มี ${qty}` : "ไม่มี";
-                            if (expected > 0) {
-                                if (qty === expected) status += " ครบ (check)";
-                                else if (qty < expected) status += ` ขาด ${expected - qty} (-)`;
+                        if (!grouped[cat.category]) grouped[cat.category] = {};
+                        cat.details.forEach(detail => {
+                            if (!grouped[cat.category][detail.name]) grouped[cat.category][detail.name] = {};
+                        });
+                    });
+
+                    equipment.forEach(item => {
+                        const checklist = checklists[entry.plate_number] || [];
+                        checklist.forEach(cat => {
+                            const found = cat.details.find(d => d.id === item.name);
+                            if (found) {
+                                const name = found.name;
+                                const qty = item.quantity || 0;
+                                const expected = found.expected || 0;
+                                let status = qty > 0 ? `มี ${qty}` : "ไม่มี";
+                                if (expected > 0) {
+                                    if (qty === expected) status += " ครบ";
+                                    else if (qty < expected) status += ` ขาด ${expected - qty}`;
+                                }
+                                if (item.remark) status += `${item.remark}`;
+                                const dateKey = formatDate(entry.submitted_at);
+                                grouped[cat.category][found.name][dateKey] = status;
                             }
-                            if (!item) status = `ไม่มี ขาด ${expected || 1} (-)`;
-                            statusMap[cat.category][d.name][date] = status;
                         });
                     });
                 });
 
+                const sortedDates = [...new Set(dates)].sort((a, b) => new Date(a) - new Date(b));
+
                 let html = '<table class="table table-bordered"><thead><tr><th>หมวด / อุปกรณ์</th>';
-                dates.forEach(d => html += `<th>${d}</th>`);
+                sortedDates.forEach(date => html += `<th>${date}</th>`);
                 html += '</tr></thead><tbody>';
 
-                Object.entries(statusMap).forEach(([cat, items]) => {
-                    html += `<tr><td colspan="${dates.length + 1}"><strong>${cat}</strong></td></tr>`;
+                Object.entries(grouped).forEach(([category, items]) => {
+                    html += `<tr class="category-row"><td colspan="${sortedDates.length + 1}">${category}</td></tr>`;
                     Object.entries(items).forEach(([name, statusByDate]) => {
                         html += `<tr><td>${name}</td>`;
-                        dates.forEach(d => html += `<td>${statusByDate[d] || '-'}</td>`);
+                        sortedDates.forEach(date => {
+                            html += `<td>${statusByDate[date] || '-'}</td>`;
+                        });
                         html += '</tr>';
                     });
                 });
