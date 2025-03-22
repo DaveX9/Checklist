@@ -296,7 +296,7 @@ app.get("/", (req, res) => {
 
 // เพิม
 app.get("/history", (req, res) => {
-    res.render("history"); // ไม่ต้องใส่นามสกุล .ejs
+    res.render("history",{ checklists }); // ไม่ต้องใส่นามสกุล .ejs
 });
 // หมด
 
@@ -442,7 +442,7 @@ app.post("/submit-checklist", async (req, res) => {
             );
 
             // res.status(200).json({ message: "✅ บันทึกข้อมูลสำเร็จ!" });
-            
+
         } catch (error) {
             console.error("❌ เกิดข้อผิดพลาดในการบันทึก:", error);
             res.status(500).json({ error: "บันทึกไม่สำเร็จ" });
