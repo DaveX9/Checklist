@@ -285,17 +285,31 @@
 
 
         <script>
+            function formatDate(dateStr) {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString("th-TH", {
+                    day: 'numeric', month: 'numeric', year: 'numeric'
+                });
+            }
+
             async function initializeLiff() {
                 try {
                     await liff.init({ liffId: "2007063611-2LjAaylQ" });
-
                     if (!liff.isLoggedIn()) {
                         liff.login();
                     } else {
                         const profile = await liff.getProfile();
                         const userId = profile.userId;
                         console.log("📢 userId:", userId);
-                        loadHistory(userId);
+
+                        $("#plateSelector").change(function () {
+                            const selectedPlate = $(this).val();
+                            if (selectedPlate) {
+                                loadHistory(userId, selectedPlate);
+                            } else {
+                                $("#historyTableContainer").html('');
+                            }
+                        });
                     }
                 } catch (error) {
                     console.error("🔥 LIFF Error:", error);
@@ -304,7 +318,9 @@
 
             function loadHistory(userId, selectedPlate) {
                 $.get(`/checklist-history/${userId}`, function (entries) {
-                    const filtered = entries.filter(e => e.plate_number === selectedPlate);
+                    console.log("📦 Entries ทั้งหมด:", entries);
+
+                    const filtered = entries.filter(e => (e.plate_number || '').trim() === selectedPlate.trim());
                     if (!filtered.length) {
                         $("#historyTableContainer").html('<div class="alert alert-warning">ไม่มีข้อมูล</div>');
                         return;
@@ -357,7 +373,6 @@
                     $("#historyTableContainer").html(html);
                 });
             }
-
 
             initializeLiff();
         </script>
