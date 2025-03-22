@@ -45,7 +45,12 @@
                 data.forEach(entry => {
                     let equipment = [];
                     try {
-                        equipment = JSON.parse(entry.equipment || "[]");
+                        equipment = typeof entry.equipment === "string"
+                            ? JSON.parse(entry.equipment)
+                            : Array.isArray(entry.equipment)
+                                ? entry.equipment
+                                : [];
+
                     } catch (e) {
                         console.error("❌ JSON parse failed:", e, entry.equipment);
                     }
@@ -56,14 +61,8 @@
                             <p>👤 ผู้ตรวจ: ${entry.inspector}</p>
                             <p>🕒 วันที่: ${new Date(entry.submitted_at).toLocaleString("th-TH")}</p>
                             <ul>
-                                ${equipment.map(e => {
-                                    const name = e.name || "ไม่ทราบชื่ออุปกรณ์";
-                                    const qty = e.quantity || 0;
-                                    const remark = e.remark || "-";
-                                    return `<li>${name} - ${qty} ชิ้น (${remark})</li>`;
-                                }).join("")}
+                                ${equipment.map(e => `<li>${e.name} - ${e.quantity || 0} ชิ้น (${e.remark || '-'})</li>`).join("")}
                             </ul>
-
                         </div>
                     `;
                 });
