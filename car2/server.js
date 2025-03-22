@@ -296,7 +296,7 @@ app.get("/", (req, res) => {
 
 // เพิม
 app.get("/history", (req, res) => {
-    res.render("history", { checklists }); // ไม่ต้องใส่นามสกุล .ejs
+    res.render("history",{ checklists }); // ไม่ต้องใส่นามสกุล .ejs
 });
 // หมด
 
@@ -329,28 +329,30 @@ app.get("/checklist-history/:userId", async (req, res) => {
 
 
 
+
+// ✅ LINE Webhook Route
 app.post("/webhook", (req, res) => {
     console.log("📩 Received Webhook:", JSON.stringify(req.body, null, 2));
 
-    res.sendStatus(200); // ✅ ตอบกลับ LINE ทันทีเพื่อไม่ให้ Timeout
+    // Acknowledge receipt of webhook
+    res.sendStatus(200);
 
+    // Process the event (e.g., responding to messages)
     const events = req.body.events;
-
     events.forEach(async (event) => {
         if (event.type === "message" && event.message.type === "text") {
-            const userMessage = event.message.text.trim(); // ✨ ตัด space ซ้าย/ขวา
+            const userMessage = event.message.text;
             const replyToken = event.replyToken;
 
-            // ✅ กรณีพิเศษ "ดูข้อมูลย้อนหลัง" — ดึงจาก DB แล้วตอบกลับ
+            // ✅ กรณี "ดูข้อมูลย้อนหลัง"
             if (userMessage === "ดูข้อมูลย้อนหลัง") {
                 const userId = event.source.userId;
 
                 try {
                     const [rows] = await db.query(
-                        `SELECT plate_number, inspector, submitted_at 
-                         FROM vehicle_checklists 
-                         WHERE user_id = ? AND submitted_at >= NOW() - INTERVAL 7 DAY
-                         ORDER BY submitted_at DESC LIMIT 10`, [userId]
+                        `SELECT plate_number, inspector, submitted_at FROM vehicle_checklists 
+                            WHERE user_id = ? AND submitted_at >= NOW() - INTERVAL 7 DAY
+                            ORDER BY submitted_at DESC LIMIT 10`, [userId]
                     );
 
                     let responseText;
@@ -391,17 +393,11 @@ app.post("/webhook", (req, res) => {
                     });
                 }
 
-                return; // ✅ หยุดตรงนี้ ไม่ต้องตอบข้อความอื่นต่อ
+                return; // ✅ หยุดเพื่อไม่ให้ไปตอบ default
             }
 
-            // ✅ กันข้อความที่ตั้งไว้ใน LINE OA (เช่น 1, 2, เมนู)
-            const reservedKeywords = ["1", "2", "เมนู"];
-            if (reservedKeywords.includes(userMessage)) {
-                console.log("⏩ ข้ามข้อความ auto-response:", userMessage);
-                return;
-            }
-
-            // ✅ เงื่อนไขปกติ: ตรวจสอบป้ายทะเบียน
+            
+            // ✅ เงื่อนไขปกติสำหรับพิมพ์ทะเบียน
             let responseText = "🚗 กรุณาพิมพ์ป้ายทะเบียนเพื่อตรวจสอบ!";
             if (cars[userMessage]) {
                 responseText = `🔎 รายการตรวจสอบสำหรับ ${userMessage}:\n\n`;
@@ -415,20 +411,19 @@ app.post("/webhook", (req, res) => {
                 });
             }
 
-            // ✅ ส่งข้อความกลับไปยังผู้ใช้
             await axios.post("https://api.line.me/v2/bot/message/reply", {
                 replyToken,
                 messages: [{ type: "text", text: responseText }]
             }, {
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${process.env.LINE_ACCESS_TOKEN}`
+                    Authorization: `Bearer ${process.env.LINE_ACCESS_TOKEN}`
                 }
             });
         }
     });
-});
 
+});
 
 // ✅ Submit Checklist & Notify LINE
 app.post("/submit-checklist", async (req, res) => {
