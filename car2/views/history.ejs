@@ -270,6 +270,15 @@
 
 
     <script>
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString("th-TH", {
+                day: 'numeric',
+                month: 'numeric',
+                year: 'numeric'
+            });
+        }
+
         async function initializeLiff() {
             try {
                 await liff.init({ liffId: "2007063611-2LjAaylQ" });
