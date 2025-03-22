@@ -10,24 +10,16 @@
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
 </head>
 <style>
-    th,
-    td {
+    th, td {
         text-align: center;
         vertical-align: middle;
     }
 </style>
-
 <body>
     <div class="container mt-5">
         <h2 class="text-center mb-4">📜 ประวัติการตรวจสอบย้อนหลัง 7 วัน</h2>
-        <!-- ✅ ส่วนแสดงข้อมูลล่าสุด -->
-        <div id="latestInfo" class="mb-4 fs-5"></div>
-
-        <!-- ✅ ส่วนตาราง -->
-        <div id="historyTableContainer"></div>
+        <div id="historyList" class="list-group"></div>
     </div>
-
-
 
     <!-- ✅ preload checklists จาก server -->
     <script>
@@ -278,27 +270,6 @@
 
 
     <script>
-        function toThaiDateTime(datetime) {
-            const date = new Date(datetime);
-            return date.toLocaleString("th-TH", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                timeZone: "Asia/Bangkok"
-            });
-        }
-
-        function formatDate(dateStr) {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString("th-TH", {
-                day: 'numeric',
-                month: 'numeric',
-                year: 'numeric'
-            });
-        }
         async function initializeLiff() {
             try {
                 await liff.init({ liffId: "2007063611-2LjAaylQ" });
@@ -316,149 +287,74 @@
             }
         }
 
-        // function loadHistory(userId) {
-        //     $.get(`/checklist-history/${userId}`, function (data) {
-        //         if (!data.length) {
-        //             $("#historyList").html('<div class="alert alert-info">ไม่มีประวัติในช่วง 7 วัน</div>');
-        //             return;
-        //         }
-
-        //         let html = "";
-        //         data.forEach(entry => {
-        //             let equipment = [];
-        //             try {
-        //                 equipment = typeof entry.equipment === "string"
-        //                     ? JSON.parse(entry.equipment)
-        //                     : Array.isArray(entry.equipment)
-        //                         ? entry.equipment
-        //                         : [];
-        //             } catch (e) {
-        //                 console.error("❌ JSON parse failed:", e, entry.equipment);
-        //             }
-
-        //             const checklist = checklists[entry.plate_number] || [];
-        //             const grouped = {};
-
-        //             equipment.forEach(item => {
-        //                 checklist.forEach(cat => {
-        //                     const found = cat.details.find(d => d.id === item.name);
-        //                     if (found) {
-        //                         if (!grouped[cat.category]) grouped[cat.category] = [];
-
-        //                         const qty = item.quantity || 0;
-        //                         const expected = found.expected || 0;
-        //                         let statusText = qty > 0 ? `มี ${qty}` : "ไม่มี";
-
-        //                         if (expected > 0) {
-        //                             if (qty === expected) {
-        //                                 statusText += " ครบ";
-        //                             } else if (qty < expected) {
-        //                                 statusText += ` ขาด ${expected - qty}`;
-        //                             }
-        //                         }
-
-        //                         const remark = item.remark ? ` ${item.remark}` : "";
-        //                         const line = `- ${found.name}: ${statusText}${remark}`;
-        //                         grouped[cat.category].push(line);
-        //                     }
-        //                 });
-        //             });
-
-        //             let block = `
-        //                 <div class="list-group-item">
-        //                 <h5>🚗 ป้ายทะเบียน: ${entry.plate_number}</h5>
-        //                 <p>👤 ผู้ตรวจ: ${entry.inspector}</p>
-        //                 <p>🕒 วันที่: ${new Date(entry.submitted_at).toLocaleString("th-TH")}</p>
-        //             `;
-
-        //             Object.entries(grouped).forEach(([category, items]) => {
-        //                 block += `<strong>${category}</strong><ul>${items.map(i => `<li>${i}</li>`).join("")}</ul>`;
-        //             });
-
-        //             block += `</div>`;
-        //             html += block;
-        //         });
-
-        //         $("#historyList").html(html);
-        //     }).fail(() => {
-        //         $("#historyList").html('<div class="alert alert-danger">❌ ดึงข้อมูลไม่สำเร็จ</div>');
-        //     });
-        // }
         function loadHistory(userId) {
-            $.get(`/checklist-history/${userId}`, function (entries) {
-                if (!entries.length) {
-                    $("#historyTableContainer").html('<div class="alert alert-info">ไม่มีข้อมูลในช่วง 7 วัน</div>');
+            $.get(`/checklist-history/${userId}`, function (data) {
+                if (!data.length) {
+                    $("#historyList").html('<div class="alert alert-info">ไม่มีประวัติในช่วง 7 วัน</div>');
                     return;
                 }
 
-                // ✅ แสดงทุกการตรวจย้อนหลัง 7 วัน
-                let inspectorHtml = "";
-                entries.forEach(entry => {
-                    inspectorHtml += `
-        <div class="mb-2">
-          <p>📋 ตรวจสอบโดย: ${entry.inspector}</p>
-          <p>📅 วันที่: ${toThaiDateTime(entry.submitted_at)}</p>
-          <p>🚗 ป้ายทะเบียน: ${entry.plate_number}</p>
-          <hr>
-        </div>
-      `;
-                });
-                $("#latestInfo").html(inspectorHtml);
+                let html = "";
+                data.forEach(entry => {
+                    let equipment = [];
+                    try {
+                        equipment = typeof entry.equipment === "string"
+                            ? JSON.parse(entry.equipment)
+                            : Array.isArray(entry.equipment)
+                                ? entry.equipment
+                                : [];
+                    } catch (e) {
+                        console.error("❌ JSON parse failed:", e, entry.equipment);
+                    }
 
-                // ✅ สร้างตารางสรุป
-                const grouped = {};
-                const dates = [];
-
-                entries.forEach(entry => {
-                    const date = formatDate(entry.submitted_at);
-                    dates.push(date);
-                    const equipment = typeof entry.equipment === "string" ? JSON.parse(entry.equipment) : entry.equipment;
                     const checklist = checklists[entry.plate_number] || [];
+                    const grouped = {};
 
                     equipment.forEach(item => {
                         checklist.forEach(cat => {
                             const found = cat.details.find(d => d.id === item.name);
                             if (found) {
-                                const name = found.name;
-                                if (!grouped[name]) grouped[name] = {};
+                                if (!grouped[cat.category]) grouped[cat.category] = [];
+
                                 const qty = item.quantity || 0;
                                 const expected = found.expected || 0;
-                                let status = qty > 0 ? `มี ${qty}` : "ไม่มี";
+                                let statusText = qty > 0 ? `มี ${qty}` : "ไม่มี";
+
                                 if (expected > 0) {
-                                    if (qty === expected) status += " ครบ";
-                                    else if (qty < expected) status += ` ขาด ${expected - qty}`;
+                                    if (qty === expected) {
+                                        statusText += " ครบ";
+                                    } else if (qty < expected) {
+                                        statusText += ` ขาด ${expected - qty}`;
+                                    }
                                 }
-                                if (item.remark) status += ` ${item.remark}`;
-                                grouped[name][date] = status;
+
+                                const remark = item.remark ? ` ${item.remark}` : "";
+                                const line = `- ${found.name}: ${statusText}${remark}`;
+                                grouped[cat.category].push(line);
                             }
                         });
                     });
-                });
 
-                const sortedDates = [...new Set(dates)].sort((a, b) => new Date(a) - new Date(b));
+                    let block = `
+                        <div class="list-group-item">
+                        <h5>🚗 ป้ายทะเบียน: ${entry.plate_number}</h5>
+                        <p>👤 ผู้ตรวจ: ${entry.inspector}</p>
+                        <p>🕒 วันที่: ${new Date(entry.submitted_at).toLocaleString("th-TH")}</p>
+                    `;
 
-                let html = '<table class="table table-bordered table-striped"><thead><tr><th>อุปกรณ์</th>';
-                sortedDates.forEach(date => {
-                    html += `<th>${date}</th>`;
-                });
-                html += '</tr></thead><tbody>';
-
-                Object.entries(grouped).forEach(([name, dateStatus]) => {
-                    html += `<tr><td>${name}</td>`;
-                    sortedDates.forEach(date => {
-                        html += `<td>${dateStatus[date] || '-'}</td>`;
+                    Object.entries(grouped).forEach(([category, items]) => {
+                        block += `<strong>${category}</strong><ul>${items.map(i => `<li>${i}</li>`).join("")}</ul>`;
                     });
-                    html += '</tr>';
+
+                    block += `</div>`;
+                    html += block;
                 });
 
-                html += '</tbody></table>';
-                $("#historyTableContainer").html(html);
+                $("#historyList").html(html);
             }).fail(() => {
-                $("#historyTableContainer").html('<div class="alert alert-danger">❌ ดึงข้อมูลไม่สำเร็จ</div>');
+                $("#historyList").html('<div class="alert alert-danger">❌ ดึงข้อมูลไม่สำเร็จ</div>');
             });
         }
-
-
 
         initializeLiff();
     </script>
