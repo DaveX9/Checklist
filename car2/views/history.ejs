@@ -43,17 +43,23 @@
 
                 let html = "";
                 data.forEach(entry => {
-                    const equipment = JSON.parse(entry.equipment || "[]");
+                    let equipment = [];
+                    try {
+                        equipment = JSON.parse(entry.equipment || "[]");
+                    } catch (e) {
+                        console.error("❌ JSON parse failed:", e, entry.equipment);
+                    }
+
                     html += `
-                <div class="list-group-item">
-                <h5>🚗 ป้ายทะเบียน: ${entry.plate_number}</h5>
-                <p>👤 ผู้ตรวจ: ${entry.inspector}</p>
-                <p>🕒 วันที่: ${new Date(entry.submitted_at).toLocaleString("th-TH")}</p>
-                <ul>
-                    ${equipment.map(e => `<li>${e.name} - ${e.quantity || 0} ชิ้น (${e.remark || '-'})</li>`).join("")}
-                </ul>
-                </div>
-            `;
+                        <div class="list-group-item">
+                            <h5>🚗 ป้ายทะเบียน: ${entry.plate_number}</h5>
+                            <p>👤 ผู้ตรวจ: ${entry.inspector}</p>
+                            <p>🕒 วันที่: ${new Date(entry.submitted_at).toLocaleString("th-TH")}</p>
+                            <ul>
+                                ${equipment.map(e => `<li>${e.name} - ${e.quantity || 0} ชิ้น (${e.remark || '-'})</li>`).join("")}
+                            </ul>
+                        </div>
+                    `;
                 });
 
                 $("#historyList").html(html);

@@ -351,8 +351,8 @@ app.post("/webhook", (req, res) => {
                 try {
                     const [rows] = await db.query(
                         `SELECT plate_number, inspector, submitted_at FROM vehicle_checklists 
-                         WHERE user_id = ? AND submitted_at >= NOW() - INTERVAL 7 DAY
-                         ORDER BY submitted_at DESC LIMIT 10`, [userId]
+                            WHERE user_id = ? AND submitted_at >= NOW() - INTERVAL 7 DAY
+                            ORDER BY submitted_at DESC LIMIT 10`, [userId]
                     );
 
                     let responseText;
@@ -438,7 +438,7 @@ app.post("/submit-checklist", async (req, res) => {
         try {
             await db.query(
                 `INSERT INTO vehicle_checklists (user_id, inspector, plate_number, equipment) VALUES (?, ?, ?, ?)`,
-                [userId, inspector, plateNumber, JSON.stringify(equipment)]
+                [userId, inspector, plateNumber, JSON.stringify(equipment)] // ← ต้อง JSON.stringify!
             );
             res.status(200).json({ message: "✅ บันทึกข้อมูลสำเร็จ!" });
         } catch (error) {
