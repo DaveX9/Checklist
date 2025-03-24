@@ -370,17 +370,25 @@
                                 const name = found.name;
                                 const qty = item.quantity || 0;
                                 const expected = found.expected || 0;
+
                                 let status = qty > 0 ? `มี ${qty}` : "ไม่มี";
                                 if (expected > 0) {
                                     if (qty === expected) status += " ครบ";
                                     else if (qty < expected) status += ` ขาด ${expected - qty}`;
                                 }
-                                if (item.remark) status += `${item.remark}`;
+
+                                // ✅ เงื่อนไขใหม่: ไม่ต่อท้าย remark ถ้าไม่มีหรือเป็น "-"
+                                const remarkText = item.remark?.trim();
+                                if (remarkText && remarkText !== "-") {
+                                    status += ` ${remarkText}`;
+                                }
+
                                 const dateKey = formatDate(entry.submitted_at);
                                 grouped[cat.category][found.name][dateKey] = status;
                             }
                         });
                     });
+
                 });
 
                 const sortedDates = [...new Set(dates)].sort((a, b) => new Date(a) - new Date(b));
