@@ -548,7 +548,6 @@ app.post("/submit-checklist", async (req, res) => {
                 let equipData = category.details.find(d => d.id === item.name);
                 let qty = item.quantity || 0;
                 let expectedQty = equipData.expected || 0;
-                let remark = item.remark ? ` ${item.remark}` : "";
 
                 if (expectedQty > 0 && qty > expectedQty) {
                     errorMessages.push(`${equipData.name} ห้ามใส่มากกว่า ${expectedQty}`);
@@ -561,11 +560,9 @@ app.post("/submit-checklist", async (req, res) => {
                 }
 
                 // categories[category.category].push(`- ${equipData.name}: ${statusText}${remark}`);
-                // update
                 let remarkText = item.remark?.trim();
-                let line = ` ${equipData.name}: ${statusText}${remarkText ? ` ${remarkText}` : ""}`;
+                let line = `- ${equipData.name}: ${statusText}${remarkText ? ` ${remarkText}` : ""}`;
                 categories[category.category].push(line);
-
             }
         });
 
