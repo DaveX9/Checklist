@@ -560,6 +560,8 @@ app.post("/submit-checklist", async (req, res) => {
                     else if (qty < expectedQty) statusText += ` ขาด ${expectedQty - qty}`;
                 }
 
+                // categories[category.category].push(`- ${equipData.name}: ${statusText}${remark}`);
+                // update
                 let remarkText = item.remark?.trim();
                 let line = `- ${equipData.name}: ${statusText}${remarkText ? ` ${remarkText}` : ""}`;
                 categories[category.category].push(line);
