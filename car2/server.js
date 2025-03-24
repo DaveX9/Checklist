@@ -502,16 +502,23 @@ app.post("/submit-checklist", async (req, res) => {
             return res.status(400).json({ error: "Incomplete data received!" });
         }
 
-        // ✅ บันทึกข้อมูลลง MySQL
+        // เพิม
         try {
             await db.query(
                 `INSERT INTO vehicle_checklists (user_id, inspector, plate_number, equipment) VALUES (?, ?, ?, ?)`,
-                [userId, inspector, plateNumber, JSON.stringify(equipment)]
+                [userId, inspector, plateNumber, JSON.stringify(equipment)] // ← ต้อง JSON.stringify!
             );
+
+            // res.status(200).json({ message: "✅ บันทึกข้อมูลสำเร็จ!" });
+
         } catch (error) {
             console.error("❌ เกิดข้อผิดพลาดในการบันทึก:", error);
-            return res.status(500).json({ error: "บันทึกไม่สำเร็จ" });
+            res.status(500).json({ error: "บันทึกไม่สำเร็จ" });
         }
+
+        // หมด
+
+        console.log("📤 Sending Message to LINE User:", userId);
 
         // ✅ ตรวจสอบว่า LINE Access Token ถูกต้อง
         if (!process.env.LINE_ACCESS_TOKEN) {
@@ -521,7 +528,8 @@ app.post("/submit-checklist", async (req, res) => {
 
         console.log("🔑 Using LINE Access Token (First 10 chars):", process.env.LINE_ACCESS_TOKEN.substring(0, 10) + "...");
 
-        // ✅ สร้างข้อความสำหรับส่ง LINE
+
+        // ✅ สร้างวันที่และเวลาปัจจุบัน
         const now = new Date();
         const thaiDateTime = new Intl.DateTimeFormat('th-TH', {
             year: 'numeric', month: 'long', day: 'numeric',
@@ -537,10 +545,10 @@ app.post("/submit-checklist", async (req, res) => {
             let category = checklists[plateNumber]?.find(c => c.details.some(d => d.id === item.name));
             if (category) {
                 if (!categories[category.category]) categories[category.category] = [];
-
                 let equipData = category.details.find(d => d.id === item.name);
                 let qty = item.quantity || 0;
                 let expectedQty = equipData.expected || 0;
+                let remark = item.remark ? ` ${item.remark}` : "";
 
                 if (expectedQty > 0 && qty > expectedQty) {
                     errorMessages.push(`${equipData.name} ห้ามใส่มากกว่า ${expectedQty}`);
@@ -552,9 +560,12 @@ app.post("/submit-checklist", async (req, res) => {
                     else if (qty < expectedQty) statusText += ` ขาด ${expectedQty - qty}`;
                 }
 
+                // categories[category.category].push(`- ${equipData.name}: ${statusText}${remark}`);
+                // update
                 let remarkText = item.remark?.trim();
-                let line = `- ${equipData.name}: ${statusText}${remarkText ? ` ${remarkText}` : ""}`;
+                let line = ` ${equipData.name}: ${statusText}${remarkText ? ` ${remarkText}` : ""}`;
                 categories[category.category].push(line);
+
             }
         });
 
@@ -566,9 +577,10 @@ app.post("/submit-checklist", async (req, res) => {
             message += ` ${category}\n${items.join("\n")}\n\n`;
         });
 
-        // ✅ ส่งข้อความไปยัง LINE User
+        console.log("🔑 Using LINE Access Token:", process.env.LINE_ACCESS_TOKEN);
+
         const response = await axios.post("https://api.line.me/v2/bot/message/push", {
-            to: userId,
+            to: userId, // ✅ ใช้ userId ที่ได้รับจาก LIFF
             messages: [{ type: "text", text: message }]
         }, {
             headers: {
