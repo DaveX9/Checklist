@@ -273,7 +273,7 @@ const checklists = {
                 { id: "brcb", name: "กล้องงูใหญ่" }, // ไม่มีจำนวนที่กำหนด
                 { id: "brcs", name: "กล้องงูเล็ก", expected: 1 },
                 { id: "brccd", name: "กล้องงูคอนโด" }, // ไม่มีจำนวนที่กำหนด
-                { id: "tbct", name: "ที่ตัดท่อ", expected: 1 },
+                { id: "tbct", name: "ที่ตัดท่อ", expected: 3 },
                 { id: "chair", name: "เก้าอี้", expected: 2 },
                 { id: "pipe", name: "ท่อ", expected: 1 },
                 { id: "grille", name: "ตะแกรง", expected: 1 },
