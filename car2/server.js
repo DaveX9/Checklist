@@ -50,7 +50,7 @@ const checklists = {
     "นง 3": [
         {
             category: "1.อุปกรณ์ไฟฟ้า", details: [
-                { id: "lan", name: "ชุด LAN เครื่อง (1) (Adapter 8)", expected: 1 },
+                { id: "lan", name: "ชุด LAN (เครื่อง1Aapter8)", expected: 1 },
                 { id: "tv-tel", name: "ชุด TV-TEL (Splitter)", expected: 1 },
                 { id: "adt", name: "ชุด Adapter เช็ค TV-TEL (สำรอง)", expected: 1 },
                 { id: "rpc", name: "ชุดเต้ารับ (เครื่อง 1 สาย 1)", expected: 1 },
@@ -130,7 +130,7 @@ const checklists = {
     "9กษ1153": [ // ✅ Fixed incorrect plate number
         {
             category: "1.อุปกรณ์ไฟฟ้า", details: [
-                { id: "lan", name: "ชุด LAN เครื่อง (1) (Adapter 8)", expected: 1 },
+                { id: "lan", name: "ชุด LAN (เครื่อง1Aapter8)", expected: 1 },
                 { id: "tv-tel", name: "ชุด TV-TEL (Splitter)" }, // ไม่มีจำนวนที่กำหนด
                 { id: "adt", name: "ชุด Adapter เช็ค TV-TEL (สำรอง)", expected: 1 },
                 { id: "rpc", name: "ชุดเต้ารับ (เครื่อง 1 สาย 1)", expected: 1 },
@@ -210,7 +210,7 @@ const checklists = {
     "5กก7884": [
         {
             category: "1. อุปกรณ์ไฟฟ้า", details: [
-                { id: "lan", name: "ชุด LAN เครื่อง (1) (Adapter 8)", expected: 1 },
+                { id: "lan", name: "ชุด LAN (เครื่อง1Aapter8)", expected: 1 },
                 { id: "tv-tel", name: "ชุด TV-TEL (Splitter)", expected: 1 },
                 { id: "adt", name: "ชุด Adapter เช็ค TV-TEL (สำรอง)", expected: 1 },
                 { id: "rpc", name: "ชุดเต้ารับ (เครื่อง 1 สาย 1)", expected: 1 },
@@ -560,7 +560,10 @@ app.post("/submit-checklist", async (req, res) => {
                     else if (qty < expectedQty) statusText += ` ขาด ${expectedQty - qty}`;
                 }
 
-                categories[category.category].push(`- ${equipData.name}: ${statusText}${remark}`);
+                let remarkText = item.remark?.trim();
+                let line = `- ${equipData.name}: ${statusText}${remarkText ? ` ${remarkText}` : ""}`;
+                categories[category.category].push(line);
+
             }
         });
 
