@@ -309,6 +309,33 @@ app.get("/get-checklist-form/:plateNumber", (req, res) => {
     res.json({ plateNumber: req.params.plateNumber, checklist });
 });
 
+// app.get("/checklist-history/:userId", async (req, res) => {
+//     const { userId } = req.params;
+
+//     try {
+//         const [rows] = await db.query(`
+//             SELECT vc.*
+//             FROM vehicle_checklists vc
+//             INNER JOIN (
+//                 SELECT DATE(submitted_at) AS date, plate_number, MAX(submitted_at) AS latest_time
+//                 FROM vehicle_checklists
+//                 WHERE user_id = ?
+//                 AND submitted_at >= NOW() - INTERVAL 7 DAY
+//                 GROUP BY DATE(submitted_at), plate_number
+//             ) latest
+//             ON DATE(vc.submitted_at) = latest.date
+//             AND vc.submitted_at = latest.latest_time
+//             AND vc.plate_number = latest.plate_number
+//             WHERE vc.user_id = ?
+//             ORDER BY vc.submitted_at DESC
+//         `, [userId, userId]);
+
+//         res.json(rows);
+//     } catch (error) {
+//         console.error("❌ ดึงข้อมูลล้มเหลว:", error);
+//         res.status(500).json({ error: "ไม่สามารถดึงข้อมูลได้" });
+//     }
+// });
 app.get("/checklist-history-latest", async (req, res) => {
     try {
         const [rows] = await db.query(`
@@ -332,7 +359,6 @@ app.get("/checklist-history-latest", async (req, res) => {
         res.status(500).json({ error: "ไม่สามารถดึงข้อมูลล่าสุดได้" });
     }
 });
-
 
 //  หมด
 app.post("/broadcast", async (req, res) => {
