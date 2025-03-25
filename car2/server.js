@@ -422,6 +422,27 @@ app.post("/webhook", (req, res) => {
                     console.error("❌ Failed to save userId to DB:", err);
                 }
             }
+            // 🟨 ส่งข้อความที่ผู้ใช้พิมพ์ไปยังทุกคน
+            if (event.type === "message" && event.message.type === "text") {
+                const inputMessage = event.message.text;
+
+                const [allUsers] = await db.query(`SELECT user_id FROM line_users`);
+                const allUserIds = allUsers.map(u => u.user_id);
+
+                for (let uid of allUserIds) {
+                    await axios.post("https://api.line.me/v2/bot/message/push", {
+                        to: uid,
+                        messages: [{ type: "text", text: `📢 มีข้อความใหม่: ${inputMessage}` }]
+                    }, {
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${process.env.LINE_ACCESS_TOKEN}`
+                        }
+                    });
+
+                    await new Promise(resolve => setTimeout(resolve, 300)); // delay
+                }
+            }
 
             // หมด            
 
@@ -541,7 +562,7 @@ app.post("/webhook", (req, res) => {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${process.env.LINE_ACCESS_TOKEN}`
                 }
-            }); ม
+            }); 
 
         }
     });
