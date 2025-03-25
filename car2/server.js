@@ -363,26 +363,29 @@ app.post("/broadcast", async (req, res) => {
         const userIds = users.map(u => u.user_id);
 
         for (let userId of userIds) {
-            await axios.post("https://api.line.me/v2/bot/message/push", {
-                to: userId,
-                messages: [{ type: "text", text: message }]
-            }, {
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${process.env.LINE_ACCESS_TOKEN}`
-                }
-            });
-        
-            await new Promise(resolve => setTimeout(resolve, 300)); // ⏱ 300ms delay
+            try {
+                await axios.post("https://api.line.me/v2/bot/message/push", {
+                    to: userId,
+                    messages: [{ type: "text", text: message }]
+                }, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${process.env.LINE_ACCESS_TOKEN}`
+                    }
+                });
+                console.log(`✅ Broadcast sent to ${userId}`);
+            } catch (err) {
+                console.error(`❌ Failed to send to ${userId}:`, err.response?.data || err.message);
+            }
+            await new Promise(resolve => setTimeout(resolve, 300));
         }
-        
+
         res.status(200).json({ success: true, message: "Broadcast sent to all users!" });
     } catch (error) {
         console.error("❌ Broadcast failed:", error);
         res.status(500).json({ error: "Broadcast failed" });
     }
 });
-
 // finish
 
 // ✅ LINE Webhook Route
@@ -400,23 +403,21 @@ app.post("/webhook", (req, res) => {
             const replyToken = event.replyToken;
 
             // เพิม
-            for (let userId of userIds) {
+            const userId = event.source?.userId;
+
+            // ✅ Save new user to line_users
+            if (userId) {
                 try {
-                    await axios.post("https://api.line.me/v2/bot/message/push", {
-                        to: userId,
-                        messages: [{ type: "text", text: message }]
-                    }, {
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${process.env.LINE_ACCESS_TOKEN}`
-                        }
-                    });
-                    console.log(`✅ Sent to ${userId}`);
+                    const [existingUsers] = await db.query(
+                        `SELECT id FROM line_users WHERE user_id = ?`, [userId]
+                    );
+                    if (existingUsers.length === 0) {
+                        await db.query(`INSERT INTO line_users (user_id) VALUES (?)`, [userId]);
+                        console.log(`✅ New user added: ${userId}`);
+                    }
                 } catch (err) {
-                    console.error(`❌ Failed to send to ${userId}:`, err.response?.data || err.message);
+                    console.error("❌ Failed to save userId to DB:", err);
                 }
-            
-                await new Promise(resolve => setTimeout(resolve, 300));
             }
             // หมด            
 
