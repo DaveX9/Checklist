@@ -309,50 +309,30 @@ app.get("/get-checklist-form/:plateNumber", (req, res) => {
     res.json({ plateNumber: req.params.plateNumber, checklist });
 });
 
-// เพิม
-// app.get("/checklist-history/:userId", async (req, res) => {
-//     const { userId } = req.params;
-
-//     try {
-//         const [rows] = await db.query(
-//             `SELECT * FROM vehicle_checklists WHERE user_id = ? AND submitted_at >= NOW() - INTERVAL 7 DAY ORDER BY submitted_at DESC`,
-//             [userId]
-//         );
-//         res.json(rows);
-//     } catch (error) {
-//         console.error("❌ ดึงข้อมูลล้มเหลว:", error);
-//         res.status(500).json({ error: "ไม่สามารถดึงข้อมูลได้" });
-//     }
-// });
-//upadte ให้ full the latest form of those day.
-
-app.get("/checklist-history/:userId", async (req, res) => {
-    const { userId } = req.params;
-
+app.get("/checklist-history-latest", async (req, res) => {
     try {
         const [rows] = await db.query(`
             SELECT vc.*
             FROM vehicle_checklists vc
             INNER JOIN (
-                SELECT DATE(submitted_at) AS date, plate_number, MAX(submitted_at) AS latest_time
+                SELECT DATE(submitted_at) AS date, plate_number, user_id, MAX(submitted_at) AS latest_time
                 FROM vehicle_checklists
-                WHERE user_id = ?
-                AND submitted_at >= NOW() - INTERVAL 7 DAY
-                GROUP BY DATE(submitted_at), plate_number
+                WHERE submitted_at >= NOW() - INTERVAL 7 DAY
+                GROUP BY DATE(submitted_at), plate_number, user_id
             ) latest
             ON DATE(vc.submitted_at) = latest.date
             AND vc.submitted_at = latest.latest_time
             AND vc.plate_number = latest.plate_number
-            WHERE vc.user_id = ?
+            AND vc.user_id = latest.user_id
             ORDER BY vc.submitted_at DESC
-        `, [userId, userId]);
-
+        `);
         res.json(rows);
-    } catch (error) {
-        console.error("❌ ดึงข้อมูลล้มเหลว:", error);
-        res.status(500).json({ error: "ไม่สามารถดึงข้อมูลได้" });
+    } catch (err) {
+        console.error("❌ ดึงข้อมูลล่าสุดล้มเหลว:", err);
+        res.status(500).json({ error: "ไม่สามารถดึงข้อมูลล่าสุดได้" });
     }
 });
+
 
 //  หมด
 app.post("/broadcast", async (req, res) => {
@@ -658,16 +638,6 @@ app.post("/submit-checklist", async (req, res) => {
 
         console.log("🔑 Using LINE Access Token:", process.env.LINE_ACCESS_TOKEN);
 
-        // const response = await axios.post("https://api.line.me/v2/bot/message/push", {
-        //     to: userId, // ✅ ใช้ userId ที่ได้รับจาก LIFF
-        //     messages: [{ type: "text", text: message }]
-        // }, {
-        //     headers: {
-        //         "Content-Type": "application/json",
-        //         "Authorization": `Bearer ${process.env.LINE_ACCESS_TOKEN}`
-        //     }
-        // });
-        // ✅ ส่ง checklist message ให้ทุกคนในระบบ line_users
         //เพิ่ม
         // ✅ ดึง user_id ทั้งหมดจาก line_users
         const [users] = await db.query(`SELECT user_id FROM line_users`);
