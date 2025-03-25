@@ -403,22 +403,26 @@ app.post("/webhook", (req, res) => {
             const replyToken = event.replyToken;
 
             // เพิม
-            const userId = event.source?.userId;
-
-            // ✅ Save new user to line_users
-            if (userId) {
+            if (event.source?.userId) {
+                const userId = event.source.userId;
                 try {
                     const [existingUsers] = await db.query(
-                        `SELECT id FROM line_users WHERE user_id = ?`, [userId]
+                        `SELECT id FROM line_users WHERE user_id = ?`,
+                        [userId]
                     );
+            
                     if (existingUsers.length === 0) {
-                        await db.query(`INSERT INTO line_users (user_id) VALUES (?)`, [userId]);
+                        await db.query(
+                            `INSERT INTO line_users (user_id) VALUES (?)`,
+                            [userId]
+                        );
                         console.log(`✅ New user added: ${userId}`);
                     }
                 } catch (err) {
                     console.error("❌ Failed to save userId to DB:", err);
                 }
             }
+            
             // หมด            
 
             // ✅ กรณี "ดูข้อมูลย้อนหลัง"
