@@ -695,8 +695,8 @@ app.post("/submit-checklist", async (req, res) => {
         }
 
         // หมด
-
-        console.log("✅ LINE Message Sent Successfully:", response.data);
+// 
+        // console.log("✅ LINE Message Sent Successfully:", response.data);
         res.status(200).json({ success: true, message: "Checklist sent to LINE!" });
 
     } catch (error) {
