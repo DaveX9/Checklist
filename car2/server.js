@@ -399,6 +399,27 @@ app.post("/webhook", (req, res) => {
             const userMessage = event.message.text;
             const replyToken = event.replyToken;
 
+            // เพิม
+            for (let userId of userIds) {
+                try {
+                    await axios.post("https://api.line.me/v2/bot/message/push", {
+                        to: userId,
+                        messages: [{ type: "text", text: message }]
+                    }, {
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${process.env.LINE_ACCESS_TOKEN}`
+                        }
+                    });
+                    console.log(`✅ Sent to ${userId}`);
+                } catch (err) {
+                    console.error(`❌ Failed to send to ${userId}:`, err.response?.data || err.message);
+                }
+            
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            // หมด            
+
             // ✅ กรณี "ดูข้อมูลย้อนหลัง"
             if (userMessage === "ดูข้อมูลย้อนหลัง") {
                 const userId = event.source.userId;
@@ -515,32 +536,7 @@ app.post("/webhook", (req, res) => {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${process.env.LINE_ACCESS_TOKEN}`
                 }
-            });
-
-
-            // เพิม
-            // 🔍 Check and save userId to database if not exists
-            if (event.source?.userId) {
-                const userId = event.source.userId;
-
-                try {
-                    // Check if user already exists
-                    const [existingUsers] = await db.query(
-                        `SELECT id FROM line_users WHERE user_id = ?`, [userId]
-                    );
-
-                    // If not, insert new user
-                    if (existingUsers.length === 0) {
-                        await db.query(
-                            `INSERT INTO line_users (user_id) VALUES (?)`,
-                            [userId]
-                        );
-                        console.log(`✅ New user added: ${userId}`);
-                    }
-                } catch (err) {
-                    console.error("❌ Failed to save userId to DB:", err);
-                }
-            }
+            });ม
 
         }
     });
