@@ -648,9 +648,11 @@ app.post("/submit-checklist", async (req, res) => {
         // });
         // ✅ ส่ง checklist message ให้ทุกคนในระบบ line_users
         //เพิ่ม
+        // ✅ ดึง user_id ทั้งหมดจาก line_users
         const [users] = await db.query(`SELECT user_id FROM line_users`);
         const userIds = users.map(u => u.user_id);
 
+        // ✅ ส่ง message ไปยังผู้ใช้ทุกคนที่เป็นเพื่อนกับบอท
         for (let uid of userIds) {
             try {
                 await axios.post("https://api.line.me/v2/bot/message/push", {
@@ -667,8 +669,10 @@ app.post("/submit-checklist", async (req, res) => {
                 console.error(`❌ Failed to send to ${uid}:`, err.response?.data || err.message);
             }
 
-            await new Promise(resolve => setTimeout(resolve, 300)); // 300ms delay
+            // 🔄 เพิ่ม delay เล็กน้อยเพื่อป้องกัน rate limit
+            await new Promise(resolve => setTimeout(resolve, 300));
         }
+
         // หมด
 
         console.log("✅ LINE Message Sent Successfully:", response.data);
