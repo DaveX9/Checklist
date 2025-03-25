@@ -410,7 +410,7 @@ app.post("/webhook", (req, res) => {
                         `SELECT id FROM line_users WHERE user_id = ?`,
                         [userId]
                     );
-            
+
                     if (existingUsers.length === 0) {
                         await db.query(
                             `INSERT INTO line_users (user_id) VALUES (?)`,
@@ -422,7 +422,7 @@ app.post("/webhook", (req, res) => {
                     console.error("❌ Failed to save userId to DB:", err);
                 }
             }
-            
+
             // หมด            
 
             // ✅ กรณี "ดูข้อมูลย้อนหลัง"
@@ -541,7 +541,7 @@ app.post("/webhook", (req, res) => {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${process.env.LINE_ACCESS_TOKEN}`
                 }
-            });ม
+            }); ม
 
         }
     });
@@ -637,15 +637,39 @@ app.post("/submit-checklist", async (req, res) => {
 
         console.log("🔑 Using LINE Access Token:", process.env.LINE_ACCESS_TOKEN);
 
-        const response = await axios.post("https://api.line.me/v2/bot/message/push", {
-            to: userId, // ✅ ใช้ userId ที่ได้รับจาก LIFF
-            messages: [{ type: "text", text: message }]
-        }, {
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${process.env.LINE_ACCESS_TOKEN}`
+        // const response = await axios.post("https://api.line.me/v2/bot/message/push", {
+        //     to: userId, // ✅ ใช้ userId ที่ได้รับจาก LIFF
+        //     messages: [{ type: "text", text: message }]
+        // }, {
+        //     headers: {
+        //         "Content-Type": "application/json",
+        //         "Authorization": `Bearer ${process.env.LINE_ACCESS_TOKEN}`
+        //     }
+        // });
+        // ✅ ส่ง checklist message ให้ทุกคนในระบบ line_users
+        //เพิ่ม
+        const [users] = await db.query(`SELECT user_id FROM line_users`);
+        const userIds = users.map(u => u.user_id);
+
+        for (let uid of userIds) {
+            try {
+                await axios.post("https://api.line.me/v2/bot/message/push", {
+                    to: uid,
+                    messages: [{ type: "text", text: message }]
+                }, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${process.env.LINE_ACCESS_TOKEN}`
+                    }
+                });
+                console.log(`✅ Message sent to ${uid}`);
+            } catch (err) {
+                console.error(`❌ Failed to send to ${uid}:`, err.response?.data || err.message);
             }
-        });
+
+            await new Promise(resolve => setTimeout(resolve, 300)); // 300ms delay
+        }
+        // หมด
 
         console.log("✅ LINE Message Sent Successfully:", response.data);
         res.status(200).json({ success: true, message: "Checklist sent to LINE!" });
