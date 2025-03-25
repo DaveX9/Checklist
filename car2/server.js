@@ -325,6 +325,7 @@ app.get("/get-checklist-form/:plateNumber", (req, res) => {
 //     }
 // });
 //upadte ให้ full the latest form of those day.
+
 app.get("/checklist-history/:userId", async (req, res) => {
     const { userId } = req.params;
 
@@ -354,7 +355,35 @@ app.get("/checklist-history/:userId", async (req, res) => {
 });
 
 //  หมด
+app.post("/broadcast", async (req, res) => {
+    const { message } = req.body;
 
+    try {
+        const [users] = await db.query(`SELECT user_id FROM line_users`);
+        const userIds = users.map(u => u.user_id);
+
+        for (let userId of userIds) {
+            await axios.post("https://api.line.me/v2/bot/message/push", {
+                to: userId,
+                messages: [{ type: "text", text: message }]
+            }, {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${process.env.LINE_ACCESS_TOKEN}`
+                }
+            });
+        
+            await new Promise(resolve => setTimeout(resolve, 300)); // ⏱ 300ms delay
+        }
+        
+        res.status(200).json({ success: true, message: "Broadcast sent to all users!" });
+    } catch (error) {
+        console.error("❌ Broadcast failed:", error);
+        res.status(500).json({ error: "Broadcast failed" });
+    }
+});
+
+// finish
 
 // ✅ LINE Webhook Route
 app.post("/webhook", (req, res) => {
@@ -487,6 +516,32 @@ app.post("/webhook", (req, res) => {
                     Authorization: `Bearer ${process.env.LINE_ACCESS_TOKEN}`
                 }
             });
+
+
+            // เพิม
+            // 🔍 Check and save userId to database if not exists
+            if (event.source?.userId) {
+                const userId = event.source.userId;
+
+                try {
+                    // Check if user already exists
+                    const [existingUsers] = await db.query(
+                        `SELECT id FROM line_users WHERE user_id = ?`, [userId]
+                    );
+
+                    // If not, insert new user
+                    if (existingUsers.length === 0) {
+                        await db.query(
+                            `INSERT INTO line_users (user_id) VALUES (?)`,
+                            [userId]
+                        );
+                        console.log(`✅ New user added: ${userId}`);
+                    }
+                } catch (err) {
+                    console.error("❌ Failed to save userId to DB:", err);
+                }
+            }
+
         }
     });
 
@@ -561,7 +616,7 @@ app.post("/submit-checklist", async (req, res) => {
                 }
 
                 // categories[category.category].push(`- ${equipData.name}: ${statusText}${remark}`);
-                
+
                 // ✅ ถ้ามี remark จริงค่อยแสดง
                 let remarkText = item.remark?.trim();
                 if (remarkText === "-") remarkText = ""; // ลบกรณีที่ใส่แค่ - มา
@@ -605,6 +660,7 @@ app.post("/submit-checklist", async (req, res) => {
 // app.listen(PORT, () => {
 //     console.log(`🚀 Server running on http://localhost:${PORT}`);
 // });
+
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Server running on port ${PORT}`);
 });
