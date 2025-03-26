@@ -38,7 +38,7 @@ app.set("views", path.join(__dirname, "views"));
 
 // 📌 Vehicle License Plates
 const cars = {
-    "นง 3": { plateNumber: "นง 3", year: 2022 },
+    "นง3": { plateNumber: "นง3", year: 2022 },
     "9กษ1153": { plateNumber: "9กษ1153", year: 2021 },
     "5กก7884": { plateNumber: "5กก7884", year: 2023 }
 };
@@ -47,7 +47,7 @@ const cars = {
 
 // 📌 Vehicle Inspection Checklists
 const checklists = {
-    "นง 3": [
+    "นง3": [
         {
             category: "1.อุปกรณ์ไฟฟ้า", details: [
                 { id: "lan", name: "ชุด LAN (เครื่อง1Aapter8)", expected: 1 },
@@ -71,7 +71,7 @@ const checklists = {
                 { id: "cloth", name: "ผ้า", expected: 9 },
                 { id: "psc", name: "ดินน้ำมัน", expected: 1 },
                 { id: "rbt", name: "สายยาง", expected: 5 },
-                { id: "bgs", name: "เกตุ", expected: 1 },
+                { id: "bgs", name: "เกจวัดแรงดัน", expected: 1 },
                 { id: "bread", name: "ขนมปัง", expected: 1 }
             ]
         },
@@ -93,7 +93,7 @@ const checklists = {
                 { id: "tip", name: "ตัวทิป", expected: 1 },
                 { id: "bct", name: "ปี๊ป", expected: 1 },
                 { id: "dmr", name: "กระจกส่องประตู", expected: 1 },
-                { id: "astc", name: "ฝอยดูดอากาศ", expected: 1 }
+                { id: "astc", name: "ฟอยล์ดูดอากาศ", expected: 1 }
             ]
         },
         {
@@ -151,7 +151,7 @@ const checklists = {
                 { id: "cloth", name: "ผ้า", expected: 10 },
                 { id: "psc", name: "ดินน้ำมัน", expected: 1 },
                 { id: "rbt", name: "สายยาง", expected: 2 },
-                { id: "bgs", name: "เกตุ", expected: 1 },
+                { id: "bgs", name: "เกจวัดแรงดัน", expected: 1 },
                 { id: "bread", name: "ขนมปัง", expected: 1 }
             ]
         },
@@ -173,7 +173,7 @@ const checklists = {
                 { id: "tip", name: "ตัวทิป", expected: 2 },
                 { id: "bct", name: "ปี๊ป", expected: 1 },
                 { id: "dmr", name: "กระจกส่องประตู" }, // ไม่มีจำนวนที่กำหนด
-                { id: "astc", name: "ฝอยดูดอากาศ", expected: 1 }
+                { id: "astc", name: "ฟอยล์ดูดอากาศ", expected: 1 }
             ]
         },
         {
@@ -231,7 +231,7 @@ const checklists = {
                 { id: "cloth", name: "ผ้าเช็ดเท้า", expected: 13 },
                 { id: "psc", name: "ดินน้ำมัน", expected: 1 },
                 { id: "rbt", name: "สายยาง", expected: 3 },
-                { id: "bgs", name: "เกตุ", expected: 1 },
+                { id: "bgs", name: "เกจวัดแรงดัน", expected: 1 },
                 { id: "bread", name: "ขนมปัง", expected: 1 }
             ]
         },
@@ -253,7 +253,7 @@ const checklists = {
                 { id: "tip", name: "ตัวทิป", expected: 1 },
                 { id: "bct", name: "ปี๊ป", expected: 1 },
                 { id: "dmr", name: "กระจกส่องประตู", expected: 1 },
-                { id: "astc", name: "ฝอยดูดอากาศ", expected: 1 }
+                { id: "astc", name: "ฟอยล์ดูดอากาศ", expected: 1 }
             ]
         },
         {

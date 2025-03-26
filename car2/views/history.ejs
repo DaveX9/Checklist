@@ -35,7 +35,7 @@
             <label class="form-label">เลือกรถ</label>
             <select id="plateSelector" class="form-select">
                 <option value="">-- เลือกรถ --</option>
-                <option value="นง 3">นง 3</option>
+                <option value="นง 3">นง3</option>
                 <option value="9กษ1153">9กษ1153</option>
                 <option value="5กก7884">5กก7884</option>
             </select>
@@ -49,11 +49,12 @@
     <!-- ✅ preload checklists จาก server -->
     <script>
         // 📌 Vehicle Inspection Checklists
+        // 📌 Vehicle Inspection Checklists
         const checklists = {
-            "นง 3": [
+            "นง3": [
                 {
                     category: "1.อุปกรณ์ไฟฟ้า", details: [
-                        { id: "lan", name: "ชุด LAN เครื่อง (1) (Adapter 8)", expected: 1 },
+                        { id: "lan", name: "ชุด LAN (เครื่อง1Aapter8)", expected: 1 },
                         { id: "tv-tel", name: "ชุด TV-TEL (Splitter)", expected: 1 },
                         { id: "adt", name: "ชุด Adapter เช็ค TV-TEL (สำรอง)", expected: 1 },
                         { id: "rpc", name: "ชุดเต้ารับ (เครื่อง 1 สาย 1)", expected: 1 },
@@ -133,7 +134,7 @@
             "9กษ1153": [ // ✅ Fixed incorrect plate number
                 {
                     category: "1.อุปกรณ์ไฟฟ้า", details: [
-                        { id: "lan", name: "ชุด LAN เครื่อง (1) (Adapter 8)", expected: 1 },
+                        { id: "lan", name: "ชุด LAN (เครื่อง1Aapter8)", expected: 1 },
                         { id: "tv-tel", name: "ชุด TV-TEL (Splitter)" }, // ไม่มีจำนวนที่กำหนด
                         { id: "adt", name: "ชุด Adapter เช็ค TV-TEL (สำรอง)", expected: 1 },
                         { id: "rpc", name: "ชุดเต้ารับ (เครื่อง 1 สาย 1)", expected: 1 },
@@ -213,7 +214,7 @@
             "5กก7884": [
                 {
                     category: "1. อุปกรณ์ไฟฟ้า", details: [
-                        { id: "lan", name: "ชุด LAN เครื่อง (1) (Adapter 8)", expected: 1 },
+                        { id: "lan", name: "ชุด LAN (เครื่อง1Aapter8)", expected: 1 },
                         { id: "tv-tel", name: "ชุด TV-TEL (Splitter)", expected: 1 },
                         { id: "adt", name: "ชุด Adapter เช็ค TV-TEL (สำรอง)", expected: 1 },
                         { id: "rpc", name: "ชุดเต้ารับ (เครื่อง 1 สาย 1)", expected: 1 },
@@ -276,7 +277,7 @@
                         { id: "brcb", name: "กล้องงูใหญ่" }, // ไม่มีจำนวนที่กำหนด
                         { id: "brcs", name: "กล้องงูเล็ก", expected: 1 },
                         { id: "brccd", name: "กล้องงูคอนโด" }, // ไม่มีจำนวนที่กำหนด
-                        { id: "tbct", name: "ที่ตัดท่อ", expected: 1 },
+                        { id: "tbct", name: "ที่ตัดท่อ", expected: 3 },
                         { id: "chair", name: "เก้าอี้", expected: 2 },
                         { id: "pipe", name: "ท่อ", expected: 1 },
                         { id: "grille", name: "ตะแกรง", expected: 1 },
